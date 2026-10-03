@@ -63,6 +63,20 @@
           </span>
         </button>
 
+        <button
+          id="servers-button"
+          class="nav-item"
+          type="button"
+        >
+          <span class="nav-icon">
+            ▣
+          </span>
+
+          <span data-i18n="servers">
+            Servers
+          </span>
+        </button>
+
         <button class="nav-item" disabled>
           <span class="nav-icon">
             ◫
@@ -494,6 +508,308 @@
         </div>
       </footer>
     </main>
+  </div>
+
+  <div
+    id="server-modal"
+    class="server-modal"
+    hidden
+  >
+    <button
+      class="server-modal-backdrop"
+      type="button"
+      aria-label="Close"
+      data-server-modal-backdrop="true"
+    ></button>
+
+    <section
+      class="server-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="server-panel-title"
+    >
+      <header class="server-panel-header">
+        <div>
+          <strong
+            id="server-panel-title"
+            data-i18n="addServer"
+          >
+            Add server
+          </strong>
+
+          <span data-i18n="sshConnection">
+            SSH connection
+          </span>
+        </div>
+
+        <button
+          id="server-modal-close"
+          class="server-panel-close"
+          type="button"
+          title="Close"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="server-panel-content">
+        <aside class="server-profile-sidebar">
+          <div class="server-section-title server-profile-heading">
+            <strong data-i18n="serverProfiles">
+              Server profiles
+            </strong>
+
+            <button
+              id="server-new"
+              class="server-new-button"
+              type="button"
+              data-i18n="newServer"
+            >
+              New server
+            </button>
+          </div>
+
+          <div
+            id="server-profile-list"
+            class="server-profile-list"
+          ></div>
+        </aside>
+
+        <form
+          id="server-form"
+          class="server-form"
+        >
+          <section class="server-form-section">
+            <div class="server-section-title">
+              <strong data-i18n="serverProfileName">
+                Profile name
+              </strong>
+            </div>
+
+            <label class="server-field">
+              <span data-i18n="serverProfileName">
+                Profile name
+              </span>
+
+              <input
+                id="server-name"
+                type="text"
+                required
+                autocomplete="off"
+                placeholder="Production server"
+                data-i18n-placeholder="serverProfileNamePlaceholder"
+              >
+            </label>
+          </section>
+
+          <section class="server-form-section">
+            <div class="server-section-title">
+              <strong data-i18n="sshConnection">
+                SSH connection
+              </strong>
+            </div>
+
+            <div class="server-grid">
+              <label class="server-field server-field-wide">
+                <span data-i18n="sshHost">
+                  Host
+                </span>
+
+                <input
+                  id="server-host"
+                  type="text"
+                  required
+                  autocomplete="off"
+                  placeholder="example.com"
+                >
+              </label>
+
+              <label class="server-field">
+                <span data-i18n="sshPort">
+                  Port
+                </span>
+
+                <input
+                  id="server-port"
+                  type="number"
+                  min="1"
+                  max="65535"
+                  value="22"
+                  required
+                >
+              </label>
+            </div>
+
+            <label class="server-field">
+              <span data-i18n="sshUsername">
+                Username
+              </span>
+
+              <input
+                id="server-username"
+                type="text"
+                required
+                autocomplete="username"
+              >
+            </label>
+
+            <label class="server-field">
+              <span data-i18n="sshPrivateKey">
+                Private key
+              </span>
+
+              <div class="server-input-action">
+                <input
+                  id="server-key"
+                  type="text"
+                  required
+                  autocomplete="off"
+                >
+
+                <button
+                  id="server-key-browse"
+                  type="button"
+                  data-i18n="browse"
+                >
+                  Browse
+                </button>
+              </div>
+            </label>
+
+            <label class="server-field">
+              <span data-i18n="sshPassphrase">
+                Key passphrase
+              </span>
+
+              <input
+                id="server-passphrase"
+                type="password"
+                autocomplete="off"
+              >
+
+              <small data-i18n="sshPassphraseNote">
+                Used only for this session and never saved.
+              </small>
+            </label>
+          </section>
+
+          <section class="server-form-section">
+            <div class="server-section-title">
+              <strong data-i18n="logSource">
+                Log source
+              </strong>
+            </div>
+
+            <label class="server-field">
+              <span data-i18n="logDirectory">
+                Log directory
+              </span>
+
+              <input
+                id="server-log-directory"
+                type="text"
+                required
+                autocomplete="off"
+                placeholder="/var/log/nginx"
+              >
+            </label>
+
+            <div class="server-grid">
+              <label class="server-field server-field-wide">
+                <span data-i18n="logPattern">
+                  File pattern
+                </span>
+
+                <input
+                  id="server-log-pattern"
+                  type="text"
+                  required
+                  autocomplete="off"
+                  placeholder="*.log"
+                >
+              </label>
+
+              <label class="server-field">
+                <span data-i18n="parser">
+                  Parser
+                </span>
+
+                <select id="server-parser">
+                  <option
+                    value="auto"
+                    data-i18n="parserAuto"
+                  >
+                    Auto detect
+                  </option>
+
+                  <option
+                    value="apache-combined"
+                    data-i18n="parserApacheCombined"
+                  >
+                    Apache Combined
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <label class="server-field">
+              <span data-i18n="projectSuffix">
+                Project suffix
+              </span>
+
+              <input
+                id="server-project-suffix"
+                type="text"
+                autocomplete="off"
+                placeholder="-ssl_log"
+              >
+
+              <small data-i18n="projectSuffixHelp">
+                Optional suffix removed from discovered log filenames.
+              </small>
+            </label>
+          </section>
+
+          <div
+            id="server-test-status"
+            class="server-test-status"
+            data-state="idle"
+          ></div>
+
+          <footer class="server-form-actions">
+            <button
+              id="server-test"
+              class="server-secondary-action"
+              type="button"
+              data-i18n="testConnection"
+            >
+              Test connection
+            </button>
+
+            <div>
+              <button
+                id="server-cancel"
+                class="server-secondary-action"
+                type="button"
+                data-i18n="cancel"
+              >
+                Cancel
+              </button>
+
+              <button
+                id="server-save"
+                class="server-primary-action"
+                type="submit"
+                disabled
+                data-i18n="saveServer"
+              >
+                Save server
+              </button>
+            </div>
+          </footer>
+        </form>
+      </div>
+    </section>
   </div>
 
   <script

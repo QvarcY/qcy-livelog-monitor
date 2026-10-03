@@ -1,0 +1,822 @@
+import {
+  translate,
+  type Language
+} from "./i18n.js";
+
+import type {
+  ServerProfile,
+  ServerProfileInput
+} from "../../server-profile.js";
+
+export interface ServerPanelController {
+  refreshLanguage(): Promise<void>;
+}
+
+function requireElement<T extends HTMLElement>(
+  id: string
+): T {
+  const element =
+    document.getElementById(id);
+
+  if (!element) {
+    throw new Error(
+      `Missing server panel element: ${id}`
+    );
+  }
+
+  return element as T;
+}
+
+function readInput(
+  id: string
+): string {
+  return requireElement<HTMLInputElement>(
+    id
+  ).value.trim();
+}
+
+function sshSignature(): string {
+  return JSON.stringify({
+    host:
+      readInput("server-host"),
+
+    port:
+      readInput("server-port"),
+
+    username:
+      readInput("server-username"),
+
+    privateKeyPath:
+      readInput("server-key"),
+
+    passphrase:
+      requireElement<HTMLInputElement>(
+        "server-passphrase"
+      ).value
+  });
+}
+
+export async function setupServerPanel(
+  getLanguage: () => Language
+): Promise<ServerPanelController> {
+  const modal =
+    requireElement<HTMLDivElement>(
+      "server-modal"
+    );
+
+  const openButton =
+    requireElement<HTMLButtonElement>(
+      "servers-button"
+    );
+
+  const closeButton =
+    requireElement<HTMLButtonElement>(
+      "server-modal-close"
+    );
+
+  const newButton =
+    requireElement<HTMLButtonElement>(
+      "server-new"
+    );
+
+  const panelTitle =
+    requireElement<HTMLElement>(
+      "server-panel-title"
+    );
+
+  const cancelButton =
+    requireElement<HTMLButtonElement>(
+      "server-cancel"
+    );
+
+  const browseButton =
+    requireElement<HTMLButtonElement>(
+      "server-key-browse"
+    );
+
+  const testButton =
+    requireElement<HTMLButtonElement>(
+      "server-test"
+    );
+
+  const saveButton =
+    requireElement<HTMLButtonElement>(
+      "server-save"
+    );
+
+  const form =
+    requireElement<HTMLFormElement>(
+      "server-form"
+    );
+
+  const profileList =
+    requireElement<HTMLDivElement>(
+      "server-profile-list"
+    );
+
+  const status =
+    requireElement<HTMLDivElement>(
+      "server-test-status"
+    );
+
+  const keyInput =
+    requireElement<HTMLInputElement>(
+      "server-key"
+    );
+
+  const passphraseInput =
+    requireElement<HTMLInputElement>(
+      "server-passphrase"
+    );
+
+  const portInput =
+    requireElement<HTMLInputElement>(
+      "server-port"
+    );
+
+  const parser =
+    requireElement<HTMLSelectElement>(
+      "server-parser"
+    );
+
+  let profiles: ServerProfile[] = [];
+  let selectedProfileId: string | null =
+    null;
+
+  let verifiedSignature: string | null =
+    null;
+
+  function setStatus(
+    message: string,
+    kind:
+      | "idle"
+      | "working"
+      | "success"
+      | "error"
+  ): void {
+    status.textContent =
+      message;
+
+    status.dataset.state =
+      kind;
+  }
+
+  function invalidateVerification(): void {
+    verifiedSignature = null;
+    saveButton.disabled = true;
+
+    setStatus(
+      "",
+      "idle"
+    );
+  }
+
+  function updateModeLabels(): void {
+    const language =
+      getLanguage();
+
+    panelTitle.textContent =
+      translate(
+        language,
+        selectedProfileId === null
+          ? "addServer"
+          : "editServer"
+      );
+
+    saveButton.textContent =
+      translate(
+        language,
+        selectedProfileId === null
+          ? "saveServer"
+          : "saveChanges"
+      );
+  }
+
+  function resetForm(): void {
+    form.reset();
+
+    selectedProfileId = null;
+
+    portInput.value = "22";
+    parser.value = "auto";
+
+    verifiedSignature = null;
+    saveButton.disabled = true;
+
+    updateModeLabels();
+
+    setStatus(
+      "",
+      "idle"
+    );
+
+    renderProfiles();
+  }
+
+  function loadProfile(
+    profile: ServerProfile
+  ): void {
+    selectedProfileId =
+      profile.id;
+
+    requireElement<HTMLInputElement>(
+      "server-name"
+    ).value =
+      profile.name;
+
+    requireElement<HTMLInputElement>(
+      "server-host"
+    ).value =
+      profile.ssh.host;
+
+    requireElement<HTMLInputElement>(
+      "server-port"
+    ).value =
+      String(
+        profile.ssh.port
+      );
+
+    requireElement<HTMLInputElement>(
+      "server-username"
+    ).value =
+      profile.ssh.username;
+
+    requireElement<HTMLInputElement>(
+      "server-key"
+    ).value =
+      profile.ssh.privateKeyPath;
+
+    requireElement<HTMLInputElement>(
+      "server-passphrase"
+    ).value =
+      "";
+
+    requireElement<HTMLInputElement>(
+      "server-log-directory"
+    ).value =
+      profile.logs.directory;
+
+    requireElement<HTMLInputElement>(
+      "server-log-pattern"
+    ).value =
+      profile.logs.pattern;
+
+    requireElement<HTMLSelectElement>(
+      "server-parser"
+    ).value =
+      profile.logs.parser;
+
+    requireElement<HTMLInputElement>(
+      "server-project-suffix"
+    ).value =
+      profile.logs.projectNameSuffix;
+
+    verifiedSignature = null;
+    saveButton.disabled = true;
+
+    updateModeLabels();
+    renderProfiles();
+
+    setStatus(
+      translate(
+        getLanguage(),
+        "testBeforeSave"
+      ),
+      "idle"
+    );
+  }
+
+  function closeModal(): void {
+    modal.hidden = true;
+
+    passphraseInput.value = "";
+    invalidateVerification();
+  }
+
+  function openModal(): void {
+    modal.hidden = false;
+
+    void refreshProfiles();
+
+    window.setTimeout(
+      () => {
+        requireElement<HTMLInputElement>(
+          "server-name"
+        ).focus();
+      },
+      0
+    );
+  }
+
+  function createProfileCard(
+    profile: ServerProfile
+  ): HTMLElement {
+    const card =
+      document.createElement("div");
+
+    card.className =
+      profile.id === selectedProfileId
+        ? "server-profile-card is-selected"
+        : "server-profile-card";
+
+    card.tabIndex = 0;
+
+    card.addEventListener(
+      "click",
+      () => {
+        loadProfile(
+          profile
+        );
+      }
+    );
+
+    card.addEventListener(
+      "keydown",
+      (
+        event: KeyboardEvent
+      ) => {
+        if (
+          event.key === "Enter" ||
+          event.key === " "
+        ) {
+          event.preventDefault();
+
+          loadProfile(
+            profile
+          );
+        }
+      }
+    );
+
+    const copy =
+      document.createElement("div");
+
+    copy.className =
+      "server-profile-copy";
+
+    const title =
+      document.createElement("strong");
+
+    title.textContent =
+      profile.name;
+
+    const target =
+      document.createElement("span");
+
+    target.textContent =
+      `${profile.ssh.username}@${profile.ssh.host}:${profile.ssh.port}`;
+
+    const logs =
+      document.createElement("small");
+
+    logs.textContent =
+      `${profile.logs.directory}/${profile.logs.pattern}`;
+
+    copy.append(
+      title,
+      target,
+      logs
+    );
+
+    const remove =
+      document.createElement("button");
+
+    remove.type = "button";
+    remove.className =
+      "server-profile-delete";
+
+    remove.textContent =
+      translate(
+        getLanguage(),
+        "deleteServer"
+      );
+
+    remove.addEventListener(
+      "click",
+      async (
+        event: MouseEvent
+      ) => {
+        event.stopPropagation();
+
+        const language =
+          getLanguage();
+
+        const confirmed =
+          window.confirm(
+            `${translate(
+              language,
+              "deleteServerConfirm"
+            )}\n\n${profile.name}`
+          );
+
+        if (!confirmed) {
+          return;
+        }
+
+        remove.disabled = true;
+
+        try {
+          profiles =
+            await window.qcyLiveLog
+              .deleteServerProfile(
+                profile.id
+              );
+
+          if (
+            selectedProfileId ===
+              profile.id
+          ) {
+            resetForm();
+          } else {
+            renderProfiles();
+          }
+
+          setStatus(
+            translate(
+              language,
+              "serverDeleted"
+            ),
+            "success"
+          );
+        } catch (error: unknown) {
+          setStatus(
+            error instanceof Error
+              ? error.message
+              : String(error),
+            "error"
+          );
+        }
+      }
+    );
+
+    card.append(
+      copy,
+      remove
+    );
+
+    return card;
+  }
+
+  function renderProfiles(): void {
+    profileList.replaceChildren();
+
+    if (profiles.length === 0) {
+      const empty =
+        document.createElement("div");
+
+      empty.className =
+        "server-profile-empty";
+
+      empty.textContent =
+        translate(
+          getLanguage(),
+          "noServerProfiles"
+        );
+
+      profileList.append(empty);
+      return;
+    }
+
+    for (const profile of profiles) {
+      profileList.append(
+        createProfileCard(
+          profile
+        )
+      );
+    }
+  }
+
+  async function refreshProfiles(): Promise<void> {
+    try {
+      profiles =
+        await window.qcyLiveLog
+          .listServerProfiles();
+
+      renderProfiles();
+    } catch (error: unknown) {
+      setStatus(
+        error instanceof Error
+          ? error.message
+          : String(error),
+        "error"
+      );
+    }
+  }
+
+  openButton.addEventListener(
+    "click",
+    () => {
+      resetForm();
+      openModal();
+    }
+  );
+
+  newButton.addEventListener(
+    "click",
+    () => {
+      resetForm();
+
+      requireElement<HTMLInputElement>(
+        "server-name"
+      ).focus();
+    }
+  );
+
+  closeButton.addEventListener(
+    "click",
+    closeModal
+  );
+
+  cancelButton.addEventListener(
+    "click",
+    closeModal
+  );
+
+  modal.addEventListener(
+    "click",
+    (
+      event: MouseEvent
+    ) => {
+      if (
+        event.target instanceof HTMLElement &&
+        event.target.dataset.serverModalBackdrop ===
+          "true"
+      ) {
+        closeModal();
+      }
+    }
+  );
+
+  window.addEventListener(
+    "keydown",
+    (
+      event: KeyboardEvent
+    ) => {
+      if (
+        event.key === "Escape" &&
+        !modal.hidden
+      ) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        closeModal();
+      }
+    },
+    {
+      capture: true
+    }
+  );
+
+  browseButton.addEventListener(
+    "click",
+    async () => {
+      const selected =
+        await window.qcyLiveLog
+          .selectPrivateKey();
+
+      if (!selected) {
+        return;
+      }
+
+      keyInput.value =
+        selected;
+
+      invalidateVerification();
+    }
+  );
+
+  for (const id of [
+    "server-host",
+    "server-port",
+    "server-username",
+    "server-key",
+    "server-passphrase"
+  ]) {
+    requireElement<HTMLInputElement>(
+      id
+    ).addEventListener(
+      "input",
+      invalidateVerification
+    );
+  }
+
+  testButton.addEventListener(
+    "click",
+    async () => {
+      const language =
+        getLanguage();
+
+      testButton.disabled = true;
+      saveButton.disabled = true;
+
+      setStatus(
+        translate(
+          language,
+          "testingConnection"
+        ),
+        "working"
+      );
+
+      try {
+        const result =
+          await window.qcyLiveLog
+            .testSshConnection(
+              {
+                host:
+                  readInput(
+                    "server-host"
+                  ),
+
+                port:
+                  readInput(
+                    "server-port"
+                  ),
+
+                username:
+                  readInput(
+                    "server-username"
+                  ),
+
+                privateKeyPath:
+                  readInput(
+                    "server-key"
+                  )
+              },
+
+              passphraseInput.value
+            );
+
+        verifiedSignature =
+          sshSignature();
+
+        saveButton.disabled =
+          false;
+
+        setStatus(
+          `${translate(
+            language,
+            "connectionSuccess"
+          )} ${result.target} · ${result.latencyMs} ms`,
+          "success"
+        );
+      } catch (error: unknown) {
+        verifiedSignature =
+          null;
+
+        saveButton.disabled =
+          true;
+
+        const message =
+          error instanceof Error
+            ? error.message
+            : String(error);
+
+        setStatus(
+          `${translate(
+            language,
+            "connectionFailed"
+          )}: ${message}`,
+          "error"
+        );
+      } finally {
+        testButton.disabled =
+          false;
+      }
+    }
+  );
+
+  form.addEventListener(
+    "submit",
+    async (
+      event: SubmitEvent
+    ) => {
+      event.preventDefault();
+
+      const language =
+        getLanguage();
+
+      if (
+        verifiedSignature === null ||
+        verifiedSignature !==
+          sshSignature()
+      ) {
+        saveButton.disabled = true;
+
+        setStatus(
+          translate(
+            language,
+            "testBeforeSave"
+          ),
+          "error"
+        );
+
+        return;
+      }
+
+      const projectNameSuffix =
+        readInput(
+          "server-project-suffix"
+        );
+
+      const profile:
+        ServerProfileInput = {
+          id:
+            selectedProfileId ??
+            undefined,
+
+          name:
+            readInput(
+              "server-name"
+            ),
+
+          ssh: {
+            host:
+              readInput(
+                "server-host"
+              ),
+
+            port:
+              readInput(
+                "server-port"
+              ),
+
+            username:
+              readInput(
+                "server-username"
+              ),
+
+            privateKeyPath:
+              readInput(
+                "server-key"
+              )
+          },
+
+          logs: {
+            directory:
+              readInput(
+                "server-log-directory"
+              ),
+
+            pattern:
+              readInput(
+                "server-log-pattern"
+              ),
+
+            parser:
+              parser.value,
+
+            projectNameSuffix
+          }
+        };
+
+      saveButton.disabled = true;
+      testButton.disabled = true;
+
+      setStatus(
+        translate(
+          language,
+          "savingServer"
+        ),
+        "working"
+      );
+
+      try {
+        profiles =
+          await window.qcyLiveLog
+            .saveServerProfile(
+              profile
+            );
+
+        renderProfiles();
+        resetForm();
+
+        setStatus(
+          translate(
+            language,
+            "serverSaved"
+          ),
+          "success"
+        );
+      } catch (error: unknown) {
+        setStatus(
+          error instanceof Error
+            ? error.message
+            : String(error),
+          "error"
+        );
+      } finally {
+        testButton.disabled =
+          false;
+      }
+    }
+  );
+
+  await refreshProfiles();
+
+  return {
+    async refreshLanguage(): Promise<void> {
+      updateModeLabels();
+      renderProfiles();
+    }
+  };
+}

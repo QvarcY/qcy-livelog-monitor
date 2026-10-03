@@ -1388,3 +1388,465 @@ body.is-focus-mode .events {
     30px
     minmax(0, 1fr);
 }
+/* server profiles panel */
+
+.server-modal[hidden] {
+  display: none;
+}
+
+.server-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 26px;
+}
+
+.server-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.62);
+  cursor: default;
+}
+
+.server-panel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-rows: 48px minmax(0, 1fr);
+  width: min(920px, calc(100vw - 52px));
+  height: min(680px, calc(100vh - 52px));
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.46);
+}
+
+.server-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-raised);
+}
+
+.server-panel-header > div {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.server-panel-header strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.server-panel-header span {
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+
+.server-panel-close {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.server-panel-close:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+.server-panel-content {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+
+.server-profile-sidebar {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  background: var(--panel-raised);
+}
+
+.server-section-title {
+  padding: 12px 14px 8px;
+}
+
+.server-section-title strong {
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.server-profile-list {
+  display: grid;
+  gap: 1px;
+}
+
+.server-profile-empty {
+  padding: 18px 14px;
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.server-profile-card {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 1px solid var(--line-soft);
+}
+
+.server-profile-card:hover {
+  background: var(--panel-hover);
+}
+
+.server-profile-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.server-profile-copy strong,
+.server-profile-copy span,
+.server-profile-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.server-profile-copy strong {
+  color: var(--text);
+  font-size: 9px;
+}
+
+.server-profile-copy span {
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  font-size: 8px;
+}
+
+.server-profile-copy small {
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 7px;
+}
+
+.server-profile-delete {
+  flex: 0 0 auto;
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 7px;
+  cursor: pointer;
+}
+
+.server-profile-delete:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.server-form {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 14px;
+  background: var(--panel);
+}
+
+.server-form-section {
+  padding: 2px 14px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.server-grid {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    120px;
+  gap: 10px;
+}
+
+.server-field {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.server-field > span {
+  color: var(--text-secondary);
+  font-size: 9px;
+}
+
+.server-field small {
+  color: var(--text-muted);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.server-field input,
+.server-field select {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  outline: none;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 9px;
+}
+
+.server-field input:focus,
+.server-field select:focus {
+  border-color: var(--accent);
+}
+
+.server-input-action {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+  gap: 7px;
+}
+
+.server-input-action button,
+.server-secondary-action,
+.server-primary-action {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.server-input-action button,
+.server-secondary-action {
+  background: var(--panel-raised);
+  color: var(--text-secondary);
+}
+
+.server-input-action button:hover,
+.server-secondary-action:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+.server-primary-action {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.server-primary-action:disabled,
+.server-secondary-action:disabled,
+.server-input-action button:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.server-test-status {
+  min-height: 36px;
+  margin: 12px 14px 0;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 8px;
+  line-height: 1.45;
+}
+
+.server-test-status:empty {
+  min-height: 0;
+  margin-top: 0;
+  padding: 0;
+}
+
+.server-test-status[data-state="working"] {
+  border-color: var(--line);
+  background: var(--panel-raised);
+  color: var(--text-secondary);
+}
+
+.server-test-status[data-state="success"] {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--green) 45%,
+      transparent
+    );
+  background:
+    color-mix(
+      in srgb,
+      var(--green) 9%,
+      transparent
+    );
+  color: var(--green);
+}
+
+.server-test-status[data-state="error"] {
+  border-color:
+    color-mix(
+      in srgb,
+      var(--red) 45%,
+      transparent
+    );
+  background:
+    color-mix(
+      in srgb,
+      var(--red) 8%,
+      transparent
+    );
+  color: var(--red);
+}
+
+.server-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px;
+}
+
+.server-form-actions > div {
+  display: flex;
+  gap: 7px;
+}
+
+:root[data-theme="light"] .server-modal-backdrop {
+  background: rgba(35, 35, 40, 0.36);
+}
+
+:root[data-theme="light"] .server-panel {
+  box-shadow:
+    0 24px 70px rgba(20, 20, 25, 0.18);
+}
+
+:root[data-theme="light"] .server-field input,
+:root[data-theme="light"] .server-field select {
+  background: #ffffff;
+}
+
+@media (max-width: 760px) {
+  .server-modal {
+    padding: 10px;
+  }
+
+  .server-panel {
+    width: calc(100vw - 20px);
+    height: calc(100vh - 20px);
+  }
+
+  .server-panel-content {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .server-profile-sidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .server-panel-header span {
+    display: none;
+  }
+
+  .server-grid {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .server-form-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .server-form-actions > div {
+    display: grid;
+    grid-template-columns:
+      1fr
+      1fr;
+  }
+
+  .server-secondary-action,
+  .server-primary-action {
+    width: 100%;
+  }
+}
+/* editable server profiles */
+
+.server-profile-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.server-new-button {
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 7px;
+  cursor: pointer;
+}
+
+.server-new-button:hover {
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+.server-profile-card {
+  cursor: pointer;
+  outline: none;
+}
+
+.server-profile-card:focus-visible {
+  box-shadow:
+    inset 2px 0 0 var(--accent);
+}
+
+.server-profile-card.is-selected {
+  background: var(--accent-soft);
+  box-shadow:
+    inset 2px 0 0 var(--accent);
+}
+
+.server-profile-card.is-selected
+.server-profile-copy strong {
+  color: var(--text);
+}

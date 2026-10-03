@@ -9,6 +9,10 @@ import type {
   AppTheme
 } from "../window.js";
 
+import {
+  setupServerPanel
+} from "./server-panel.js";
+
 function requireElement<T extends HTMLElement>(
   id: string
 ): T {
@@ -311,6 +315,12 @@ async function boot(): Promise<void> {
     preferences
   );
 
+  const serverPanel =
+    await setupServerPanel(
+      () =>
+        preferences.language
+    );
+
   authorLink.addEventListener(
     "click",
     () => {
@@ -348,6 +358,9 @@ async function boot(): Promise<void> {
       applyPreferences(
         preferences
       );
+
+      await serverPanel
+        .refreshLanguage();
 
       setShellStatus(
         preferences.language,

@@ -69,7 +69,55 @@ const en = {
   dark: "Dark",
   light: "Light",
   switchLanguage: "Switch language",
-  switchTheme: "Switch theme"
+  switchTheme: "Switch theme",
+
+  servers: "Servers",
+  addServer: "Add server",
+  editServer: "Edit server",
+  newServer: "New server",
+  saveChanges: "Save changes",
+  serverProfiles: "Server profiles",
+  noServerProfiles: "No servers configured yet.",
+
+  serverProfileName: "Profile name",
+  serverProfileNamePlaceholder: "Production server",
+
+  sshConnection: "SSH connection",
+  sshHost: "Host",
+  sshPort: "Port",
+  sshUsername: "Username",
+  sshPrivateKey: "Private key",
+  browse: "Browse",
+  sshPassphrase: "Key passphrase",
+  sshPassphraseNote:
+    "Used only for this session and never saved.",
+
+  logSource: "Log source",
+  logDirectory: "Log directory",
+  logPattern: "File pattern",
+  parser: "Parser",
+  parserAuto: "Auto detect",
+  parserApacheCombined: "Apache Combined",
+  projectSuffix: "Project suffix",
+  projectSuffixHelp:
+    "Optional suffix removed from discovered log filenames.",
+
+  testConnection: "Test connection",
+  testingConnection: "Testing SSH connection…",
+  connectionSuccess: "SSH connection successful:",
+  connectionFailed: "SSH connection failed",
+
+  saveServer: "Save server",
+  savingServer: "Saving server…",
+  serverSaved: "Server profile saved.",
+  deleteServer: "Delete",
+  deleteServerConfirm: "Delete this server profile?",
+  serverDeleted: "Server profile deleted.",
+  testBeforeSave:
+    "Test the SSH connection before saving.",
+
+  cancel: "Cancel",
+  close: "Close"
 } as const;
 
 export type TranslationKey =
@@ -145,7 +193,55 @@ const lv: Record<
   dark: "Tumšs",
   light: "Gaišs",
   switchLanguage: "Mainīt valodu",
-  switchTheme: "Mainīt tēmu"
+  switchTheme: "Mainīt tēmu",
+
+  servers: "Serveri",
+  addServer: "Pievienot serveri",
+  editServer: "Rediģēt serveri",
+  newServer: "Jauns serveris",
+  saveChanges: "Saglabāt izmaiņas",
+  serverProfiles: "Serveru profili",
+  noServerProfiles: "Neviens serveris vēl nav konfigurēts.",
+
+  serverProfileName: "Profila nosaukums",
+  serverProfileNamePlaceholder: "Produkcijas serveris",
+
+  sshConnection: "SSH savienojums",
+  sshHost: "Hosts",
+  sshPort: "Ports",
+  sshUsername: "Lietotājvārds",
+  sshPrivateKey: "Privātā atslēga",
+  browse: "Izvēlēties",
+  sshPassphrase: "Atslēgas passphrase",
+  sshPassphraseNote:
+    "Izmanto tikai šajā sesijā un nekad nesaglabā.",
+
+  logSource: "Logu avots",
+  logDirectory: "Logu direktorija",
+  logPattern: "Failu šablons",
+  parser: "Parseris",
+  parserAuto: "Noteikt automātiski",
+  parserApacheCombined: "Apache Combined",
+  projectSuffix: "Projekta sufikss",
+  projectSuffixHelp:
+    "Neobligāts sufikss, ko noņem no atrasto logu failu nosaukumiem.",
+
+  testConnection: "Pārbaudīt savienojumu",
+  testingConnection: "Pārbauda SSH savienojumu…",
+  connectionSuccess: "SSH savienojums veiksmīgs:",
+  connectionFailed: "SSH savienojums neizdevās",
+
+  saveServer: "Saglabāt serveri",
+  savingServer: "Saglabā serveri…",
+  serverSaved: "Servera profils saglabāts.",
+  deleteServer: "Dzēst",
+  deleteServerConfirm: "Dzēst šo servera profilu?",
+  serverDeleted: "Servera profils izdzēsts.",
+  testBeforeSave:
+    "Pirms saglabāšanas pārbaudi SSH savienojumu.",
+
+  cancel: "Atcelt",
+  close: "Aizvērt"
 };
 
 const translations: Record<
