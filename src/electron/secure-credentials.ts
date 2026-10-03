@@ -1,6 +1,8 @@
 import {
   mkdir,
   readFile,
+  rename,
+  rm,
   writeFile
 } from "node:fs/promises";
 
@@ -123,12 +125,39 @@ async function readCredentials(
       version: 1,
       passphrases
     };
-  } catch {
-    return {
-      version: 1,
-      passphrases: {}
-    };
+    } catch (error: unknown) {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      (
+        error as {
+          code?: unknown;
+        }
+      ).code === "ENOENT"
+    ) {
+      return {
+        version: 1,
+        passphrases: {}
+      };
+    }
+
+    throw new Error(
+      "Secure credential store could not be read safely.",
+      {
+        cause: error
+      }
+    );
   }
+}
+
+function credentialTempFile(
+  dataDirectory: string
+): string {
+  return path.join(
+    dataDirectory,
+    `.secure-credentials.${process.pid}.tmp`
+  );
 }
 
 async function writeCredentials(
@@ -142,17 +171,51 @@ async function writeCredentials(
     }
   );
 
-  await writeFile(
+  const target =
     credentialsFile(
       dataDirectory
-    ),
+    );
+
+  const temporary =
+    credentialTempFile(
+      dataDirectory
+    );
+
+  const payload =
     JSON.stringify(
       file,
       null,
       2
-    ) + "\n",
-    "utf8"
-  );
+    ) + "\n";
+
+  try {
+    await writeFile(
+      temporary,
+      payload,
+      {
+        encoding: "utf8",
+        flag: "wx"
+      }
+    );
+
+    await rename(
+      temporary,
+      target
+    );
+  } catch (error) {
+    await rm(
+      temporary,
+      {
+        force: true
+      }
+    ).catch(
+      () => {
+        // Best-effort temp cleanup only.
+      }
+    );
+
+    throw error;
+  }
 }
 
 export async function rememberSshPassphrase(

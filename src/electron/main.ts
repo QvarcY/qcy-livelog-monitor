@@ -123,8 +123,12 @@ function applyLaunchAtLogin(
   }
 
   if (!app.isPackaged) {
+    /*
+     * Development Electron must never become a real
+     * Windows login item.
+     */
     app.setLoginItemSettings({
-      openAtLogin: enabled,
+      openAtLogin: false,
       path: process.execPath,
       args: [
         app.getAppPath()
