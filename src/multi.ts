@@ -206,60 +206,152 @@ async function main(): Promise<void> {
     mask: "*"
   });
 
-  const client = new Client();
-
-  await connectClient(client, {
-    host: config.host,
-    port: config.port,
-    username: config.username,
-    privateKey: fs.readFileSync(config.privateKeyPath),
-    passphrase,
-    readyTimeout: 15000,
-    keepaliveInterval: 10000,
-    keepaliveCountMax: 3
-  });
-
-  console.log("");
-  console.log("SSH connected");
-  console.log("Discovering HTTPS logs...");
-
-  const logs = await discoverLogs(
-    client,
-    remoteLogDir
+  const privateKey = fs.readFileSync(
+    config.privateKeyPath
   );
 
-  if (logs.length === 0) {
-    client.end();
-    throw new Error(
-      "Netika atrasts neviens HTTPS logs."
-    );
-  }
-
-  console.log("");
-  console.log(
-    `Monitoring ${logs.length} projects:`
-  );
-
-  for (const log of logs) {
-    console.log(`  - ${log.domain}`);
-  }
-
-  console.log("");
-  console.log("Waiting for new log entries...");
-  console.log("Ctrl+C to stop");
-  console.log("");
+  let stopping = false;
+  let activeClient: Client | null = null;
+  let retryAttempt = 0;
 
   process.once("SIGINT", () => {
+    stopping = true;
+
     console.log("");
     console.log("Stopping multi-project monitor...");
-    client.end();
+
+    activeClient?.end();
     process.exit(0);
   });
 
-  try {
-    await monitorLogs(client, logs);
-  } finally {
-    client.end();
+  while (!stopping) {
+    const client = new Client();
+    activeClient = client;
+
+    let lastClientError: Error | null = null;
+    let connectedAt = 0;
+
+    client.on("error", (error: Error) => {
+      lastClientError = error;
+    });
+
+    try {
+      console.log("");
+      console.log(
+        retryAttempt === 0
+          ? "Connecting to SSH..."
+          : `Reconnect attempt ${retryAttempt}...`
+      );
+
+      await connectClient(client, {
+        host: config.host,
+        port: config.port,
+        username: config.username,
+        privateKey,
+        passphrase,
+        readyTimeout: 15000,
+        keepaliveInterval: 10000,
+        keepaliveCountMax: 3
+      });
+
+      connectedAt = Date.now();
+
+      const disconnected = new Promise<never>(
+        (_resolve, reject) => {
+          client.once("close", () => {
+            reject(
+              lastClientError ??
+                new Error("SSH connection closed.")
+            );
+          });
+        }
+      );
+
+      console.log("SSH connected");
+      console.log("Discovering HTTPS logs...");
+
+      const logs = await Promise.race([
+        discoverLogs(client, remoteLogDir),
+        disconnected
+      ]);
+
+      if (logs.length === 0) {
+        throw new Error(
+          "Netika atrasts neviens HTTPS logs."
+        );
+      }
+
+      console.log("");
+      console.log(
+        `Monitoring ${logs.length} projects:`
+      );
+
+      for (const log of logs) {
+        console.log(`  - ${log.domain}`);
+      }
+
+      console.log("");
+      console.log("Waiting for new log entries...");
+      console.log("Ctrl+C to stop");
+      console.log("");
+
+
+      await Promise.race([
+        monitorLogs(client, logs),
+        disconnected
+      ]);
+
+      if (!stopping) {
+        throw new Error(
+          "Remote log stream closed."
+        );
+      }
+    } catch (error: unknown) {
+      if (stopping) {
+        break;
+      }
+
+      const connectedDuration =
+        connectedAt > 0
+          ? Date.now() - connectedAt
+          : 0;
+
+      if (connectedDuration >= 15000) {
+        retryAttempt = 0;
+      }
+
+      const delayMs = Math.min(
+        30000,
+        2000 * 2 ** Math.min(retryAttempt, 4)
+      );
+
+      retryAttempt += 1;
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : String(error);
+
+      console.error("");
+      console.error(
+        `SSH session ended: ${message}`
+      );
+
+      console.log(
+        `Reconnecting in ${delayMs / 1000}s...`
+      );
+
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, delayMs);
+      });
+    } finally {
+
+      if (activeClient === client) {
+        activeClient = null;
+      }
+
+      client.end();
+    }
   }
 }
 

@@ -13,7 +13,7 @@
 
 - [x] discover available `*-ssl_log` files
 - [x] monitor multiple projects
-- [ ] reconnect automatically
+- [x] reconnect automatically
 - [ ] detect log rotation
 - [ ] normalize project names
 - [ ] calculate observed hosting log delay
