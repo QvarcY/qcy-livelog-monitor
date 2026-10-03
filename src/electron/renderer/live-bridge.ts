@@ -41,6 +41,22 @@ let liveUiPaused =
 let liveSearchSuggestionIndex =
   -1;
 
+let liveProjectViewFilter:
+  string | null =
+    null;
+
+let liveTypeViewFilter:
+  string | null =
+    null;
+
+let liveStatusViewFilter:
+  string | null =
+    null;
+
+let openLiveToolbarFilter:
+  LiveToolbarFilterKind | null =
+    null;
+
 let activityTimer:
   number | null =
     null;
@@ -2480,6 +2496,908 @@ function createRawRow(
   return row;
 }
 
+type LiveToolbarFilterKind =
+  | "project"
+  | "type"
+  | "status";
+
+type LiveToolbarFilterOption = {
+  value:
+    string;
+  count:
+    number;
+};
+
+function liveToolbarFilterButton(
+  kind:
+    LiveToolbarFilterKind
+): HTMLButtonElement {
+  const key =
+    kind === "project"
+      ? "filterProject"
+      : kind === "type"
+        ? "filterType"
+        : "filterStatus";
+
+  const label =
+    document.querySelector<
+      HTMLElement
+    >(
+      `[data-i18n="${key}"]`
+    );
+
+  const button =
+    label?.closest<
+      HTMLButtonElement
+    >(
+      "button"
+    );
+
+  if (!button) {
+    throw new Error(
+      `Toolbar filter button missing: ${kind}`
+    );
+  }
+
+  return button;
+}
+
+function liveToolbarFilterSelection(
+  kind:
+    LiveToolbarFilterKind
+): string | null {
+  if (kind === "project") {
+    return liveProjectViewFilter;
+  }
+
+  if (kind === "type") {
+    return liveTypeViewFilter;
+  }
+
+  return liveStatusViewFilter;
+}
+
+function setLiveToolbarFilterSelection(
+  kind:
+    LiveToolbarFilterKind,
+  value:
+    string | null
+): void {
+  if (kind === "project") {
+    liveProjectViewFilter =
+      value;
+  } else if (kind === "type") {
+    liveTypeViewFilter =
+      value;
+  } else {
+    liveStatusViewFilter =
+      value;
+  }
+
+  selectedTimelineSecond =
+    null;
+
+  closeLiveToolbarFilterMenu();
+
+  renderCurrentView();
+}
+
+function rawRequestMatchesToolbarFilters(
+  event:
+    LiveRequestEvent
+): boolean {
+  if (
+    liveProjectViewFilter !== null &&
+    event.domain !==
+      liveProjectViewFilter
+  ) {
+    return false;
+  }
+
+  if (
+    liveTypeViewFilter !== null &&
+    String(
+      event.category
+    ) !==
+      liveTypeViewFilter
+  ) {
+    return false;
+  }
+
+  if (
+    liveStatusViewFilter !== null &&
+    String(
+      event.status
+    ) !==
+      liveStatusViewFilter
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function smartGroupMatchesToolbarFilters(
+  group:
+    ActivityGroup
+): boolean {
+  if (
+    liveProjectViewFilter !== null &&
+    group.domain !==
+      liveProjectViewFilter
+  ) {
+    return false;
+  }
+
+  if (
+    liveTypeViewFilter !== null &&
+    String(
+      group.layer
+    ) !==
+      liveTypeViewFilter
+  ) {
+    return false;
+  }
+
+  if (
+    liveStatusViewFilter !== null &&
+    !group.requests.some(
+      request =>
+        String(
+          request.status
+        ) ===
+          liveStatusViewFilter
+    )
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function collectLiveToolbarFilterOptions(
+  kind:
+    LiveToolbarFilterKind
+): LiveToolbarFilterOption[] {
+  const counts =
+    new Map<
+      string,
+      number
+    >();
+
+  const add = (
+    value:
+      unknown
+  ): void => {
+    const normalized =
+      String(
+        value ?? ""
+      ).trim();
+
+    if (!normalized) {
+      return;
+    }
+
+    counts.set(
+      normalized,
+      (
+        counts.get(
+          normalized
+        ) ??
+        0
+      ) + 1
+    );
+  };
+
+  if (viewMode === "raw") {
+    for (
+      const event
+      of rawRequests.values()
+    ) {
+      if (
+        !isMonitoredProject(
+          event.domain
+        )
+      ) {
+        continue;
+      }
+
+      if (kind === "project") {
+        add(
+          event.domain
+        );
+      } else if (
+        kind === "type"
+      ) {
+        add(
+          event.category
+        );
+      } else {
+        add(
+          event.status
+        );
+      }
+    }
+  } else {
+    for (
+      const group
+      of smartGroups.values()
+    ) {
+      if (
+        !isMonitoredProject(
+          group.domain
+        )
+      ) {
+        continue;
+      }
+
+      if (kind === "project") {
+        add(
+          group.domain
+        );
+      } else if (
+        kind === "type"
+      ) {
+        add(
+          group.layer
+        );
+      } else {
+        const seenStatuses =
+          new Set(
+            group.requests.map(
+              request =>
+                String(
+                  request.status
+                )
+            )
+          );
+
+        for (
+          const status
+          of seenStatuses
+        ) {
+          add(
+            status
+          );
+        }
+      }
+    }
+  }
+
+  return [...counts.entries()]
+    .map(
+      (
+        [
+          value,
+          count
+        ]
+      ) => ({
+        value,
+        count
+      })
+    )
+    .sort(
+      (
+        left,
+        right
+      ) => {
+        if (
+          kind === "status"
+        ) {
+          return (
+            Number(
+              left.value
+            ) -
+            Number(
+              right.value
+            )
+          );
+        }
+
+        return left.value
+          .localeCompare(
+            right.value
+          );
+      }
+    );
+}
+
+function liveToolbarFilterDefaultLabel(
+  kind:
+    LiveToolbarFilterKind
+): string {
+  const lv =
+    isLatvianUi();
+
+  if (kind === "project") {
+    return lv
+      ? "Projekts"
+      : "Project";
+  }
+
+  if (kind === "type") {
+    return lv
+      ? "Tips"
+      : "Type";
+  }
+
+  return lv
+    ? "Statuss"
+    : "Status";
+}
+
+function liveToolbarFilterAllLabel(
+  kind:
+    LiveToolbarFilterKind
+): string {
+  const lv =
+    isLatvianUi();
+
+  if (kind === "project") {
+    return lv
+      ? "Visi projekti"
+      : "All projects";
+  }
+
+  if (kind === "type") {
+    return lv
+      ? "Visi tipi"
+      : "All types";
+  }
+
+  return lv
+    ? "Visi statusi"
+    : "All statuses";
+}
+
+function displayLiveToolbarFilterValue(
+  kind:
+    LiveToolbarFilterKind,
+  value:
+    string
+): string {
+  if (
+    kind === "type" &&
+    viewMode === "smart"
+  ) {
+    const values:
+      Record<
+        string,
+        string
+      > = {
+        "human-like":
+          "Human-like",
+        bot:
+          "Bot",
+        security:
+          "Security",
+        server:
+          "Server",
+        error:
+          "Error",
+        unknown:
+          "Unknown"
+      };
+
+    return (
+      values[value] ??
+      value
+    );
+  }
+
+  return value;
+}
+
+function updateLiveToolbarFilterButtons():
+  void {
+  const kinds:
+    LiveToolbarFilterKind[] = [
+      "project",
+      "type",
+      "status"
+    ];
+
+  for (
+    const kind
+    of kinds
+  ) {
+    const button =
+      liveToolbarFilterButton(
+        kind
+      );
+
+    button.disabled =
+      false;
+
+    button.removeAttribute(
+      "aria-disabled"
+    );
+
+    const selected =
+      liveToolbarFilterSelection(
+        kind
+      );
+
+    button.classList.toggle(
+      "is-active",
+      selected !== null
+    );
+
+    button.setAttribute(
+      "aria-expanded",
+      String(
+        openLiveToolbarFilter ===
+          kind
+      )
+    );
+
+    const label =
+      button.querySelector<
+        HTMLElement
+      >(
+        "[data-i18n]"
+      );
+
+    if (label) {
+      label.textContent =
+        selected === null
+          ? liveToolbarFilterDefaultLabel(
+              kind
+            )
+          : displayLiveToolbarFilterValue(
+              kind,
+              selected
+            );
+    }
+
+    button.title =
+      selected === null
+        ? liveToolbarFilterDefaultLabel(
+            kind
+          )
+        : `${
+            liveToolbarFilterDefaultLabel(
+              kind
+            )
+          }: ${
+            displayLiveToolbarFilterValue(
+              kind,
+              selected
+            )
+          }`;
+  }
+}
+
+function normalizeLiveToolbarFilterSelections():
+  void {
+  const kinds:
+    LiveToolbarFilterKind[] = [
+      "project",
+      "type",
+      "status"
+    ];
+
+  for (
+    const kind
+    of kinds
+  ) {
+    const selected =
+      liveToolbarFilterSelection(
+        kind
+      );
+
+    if (
+      selected ===
+      null
+    ) {
+      continue;
+    }
+
+    const available =
+      collectLiveToolbarFilterOptions(
+        kind
+      )
+        .some(
+          option =>
+            option.value ===
+            selected
+        );
+
+    if (!available) {
+      if (kind === "project") {
+        liveProjectViewFilter =
+          null;
+      } else if (
+        kind === "type"
+      ) {
+        liveTypeViewFilter =
+          null;
+      } else {
+        liveStatusViewFilter =
+          null;
+      }
+    }
+  }
+}
+
+function ensureLiveToolbarFilterMenu():
+  HTMLDivElement {
+  const toolbar =
+    document.querySelector<
+      HTMLElement
+    >(
+      ".toolbar"
+    );
+
+  if (!toolbar) {
+    throw new Error(
+      "Toolbar container is missing."
+    );
+  }
+
+  let menu =
+    toolbar.querySelector<
+      HTMLDivElement
+    >(
+      ".live-toolbar-filter-menu"
+    );
+
+  if (!menu) {
+    menu =
+      document.createElement(
+        "div"
+      );
+
+    menu.className =
+      "live-toolbar-filter-menu";
+
+    menu.hidden =
+      true;
+
+    menu.setAttribute(
+      "role",
+      "menu"
+    );
+
+    toolbar.append(
+      menu
+    );
+  }
+
+  return menu;
+}
+
+function closeLiveToolbarFilterMenu():
+  void {
+  const menu =
+    document.querySelector<
+      HTMLDivElement
+    >(
+      ".live-toolbar-filter-menu"
+    );
+
+  if (menu) {
+    menu.hidden =
+      true;
+
+    menu.replaceChildren();
+  }
+
+  openLiveToolbarFilter =
+    null;
+
+  updateLiveToolbarFilterButtons();
+}
+
+function renderLiveToolbarFilterMenu(
+  kind:
+    LiveToolbarFilterKind
+): void {
+  const toolbar =
+    document.querySelector<
+      HTMLElement
+    >(
+      ".toolbar"
+    );
+
+  if (!toolbar) {
+    return;
+  }
+
+  closeLiveSearchSuggestions();
+
+  const menu =
+    ensureLiveToolbarFilterMenu();
+
+  const button =
+    liveToolbarFilterButton(
+      kind
+    );
+
+  const toolbarRect =
+    toolbar.getBoundingClientRect();
+
+  const buttonRect =
+    button.getBoundingClientRect();
+
+  const width =
+    Math.max(
+      190,
+      buttonRect.width
+    );
+
+  let left =
+    buttonRect.left -
+    toolbarRect.left;
+
+  left =
+    Math.min(
+      left,
+      Math.max(
+        8,
+        toolbar.clientWidth -
+        width -
+        8
+      )
+    );
+
+  menu.style.left =
+    `${Math.max(
+      8,
+      left
+    )}px`;
+
+  menu.style.width =
+    `${width}px`;
+
+  menu.replaceChildren();
+
+  const heading =
+    document.createElement(
+      "div"
+    );
+
+  heading.className =
+    "live-toolbar-filter-heading";
+
+  heading.textContent =
+    liveToolbarFilterDefaultLabel(
+      kind
+    );
+
+  menu.append(
+    heading
+  );
+
+  const selected =
+    liveToolbarFilterSelection(
+      kind
+    );
+
+  const appendOption = (
+    value:
+      string | null,
+    label:
+      string,
+    count?: number
+  ): void => {
+    const option =
+      document.createElement(
+        "button"
+      );
+
+    option.type =
+      "button";
+
+    option.className =
+      "live-toolbar-filter-option";
+
+    const active =
+      value ===
+      selected;
+
+    option.classList.toggle(
+      "is-selected",
+      active
+    );
+
+    option.setAttribute(
+      "aria-checked",
+      String(
+        active
+      )
+    );
+
+    const text =
+      document.createElement(
+        "span"
+      );
+
+    text.textContent =
+      label;
+
+    option.append(
+      text
+    );
+
+    if (
+      typeof count ===
+      "number"
+    ) {
+      const badge =
+        document.createElement(
+          "span"
+        );
+
+      badge.className =
+        "live-toolbar-filter-count";
+
+      badge.textContent =
+        String(
+          count
+        );
+
+      option.append(
+        badge
+      );
+    }
+
+    option.addEventListener(
+      "click",
+      event => {
+        event.stopPropagation();
+
+        setLiveToolbarFilterSelection(
+          kind,
+          value
+        );
+      }
+    );
+
+    menu.append(
+      option
+    );
+  };
+
+  appendOption(
+    null,
+    liveToolbarFilterAllLabel(
+      kind
+    )
+  );
+
+  const options =
+    collectLiveToolbarFilterOptions(
+      kind
+    );
+
+  for (
+    const option
+    of options
+  ) {
+    appendOption(
+      option.value,
+      displayLiveToolbarFilterValue(
+        kind,
+        option.value
+      ),
+      option.count
+    );
+  }
+
+  if (
+    options.length ===
+    0
+  ) {
+    const empty =
+      document.createElement(
+        "div"
+      );
+
+    empty.className =
+      "live-toolbar-filter-empty";
+
+    empty.textContent =
+      isLatvianUi()
+        ? "Šajā sesijā vēl nav vērtību."
+        : "No values in this session yet.";
+
+    menu.append(
+      empty
+    );
+  }
+
+  menu.hidden =
+    false;
+
+  openLiveToolbarFilter =
+    kind;
+
+  updateLiveToolbarFilterButtons();
+}
+
+function setupLiveToolbarFilters():
+  void {
+  const kinds:
+    LiveToolbarFilterKind[] = [
+      "project",
+      "type",
+      "status"
+    ];
+
+  for (
+    const kind
+    of kinds
+  ) {
+    const button =
+      liveToolbarFilterButton(
+        kind
+      );
+
+    button.disabled =
+      false;
+
+    button.removeAttribute(
+      "aria-disabled"
+    );
+
+    button.setAttribute(
+      "aria-haspopup",
+      "menu"
+    );
+
+    button.addEventListener(
+      "click",
+      event => {
+        event.stopPropagation();
+
+        if (
+          openLiveToolbarFilter ===
+          kind
+        ) {
+          closeLiveToolbarFilterMenu();
+          return;
+        }
+
+        renderLiveToolbarFilterMenu(
+          kind
+        );
+      }
+    );
+  }
+
+  document.addEventListener(
+    "click",
+    event => {
+      const target =
+        event.target;
+
+      if (
+        target instanceof
+          Element &&
+        target.closest(
+          ".live-toolbar-filter-menu"
+        )
+      ) {
+        return;
+      }
+
+      closeLiveToolbarFilterMenu();
+    }
+  );
+
+  window.addEventListener(
+    "blur",
+    closeLiveToolbarFilterMenu
+  );
+
+  window.addEventListener(
+    "resize",
+    closeLiveToolbarFilterMenu
+  );
+
+  updateLiveToolbarFilterButtons();
+}
 function normalizedLiveSearch(
   value: unknown
 ): string {
@@ -3650,6 +4568,9 @@ function renderRawView():
           isMonitoredProject(
             event.domain
           ) &&
+          rawRequestMatchesToolbarFilters(
+            event
+          ) &&
           rawRequestMatchesSearch(
             event
           ) &&
@@ -4279,6 +5200,9 @@ function renderSmartView():
         isMonitoredProject(
           group.domain
         ) &&
+        smartGroupMatchesToolbarFilters(
+          group
+        ) &&
         smartGroupMatchesSearch(
           group
         ) &&
@@ -4330,6 +5254,8 @@ function renderSmartView():
 
 function renderCurrentView():
   void {
+  normalizeLiveToolbarFilterSelections();
+  updateLiveToolbarFilterButtons();
   updatePauseButton();
   updatePresentation();
   renderActivityTimeline();
@@ -4516,6 +5442,7 @@ export async function setupLiveBridge():
   createActivityTimeline();
   createViewControls();
   setupSearchAndPauseControls();
+  setupLiveToolbarFilters();
   watchLanguage();
   startActivityClock();
 

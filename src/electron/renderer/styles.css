@@ -3710,3 +3710,153 @@ body.is-focus-mode .events {
 .live-search-suggestion-value {
   color: #22242b;
 }
+/* v1.0 Toolbar Filters */
+
+.toolbar-actions button.is-active {
+  border-color: #766fe8;
+  background:
+    rgb(108 99 255 / 12%);
+  color: #c2beff;
+}
+
+.toolbar-actions button.is-active span {
+  color: inherit;
+}
+
+.live-toolbar-filter-menu {
+  position: absolute;
+  top: calc(100% - 1px);
+  z-index: 85;
+  display: grid;
+  max-height: 340px;
+  overflow-y: auto;
+  border:
+    1px solid
+    var(--line);
+  border-radius:
+    0 0 7px 7px;
+  background: #101115;
+  box-shadow:
+    0 14px 32px
+    rgb(0 0 0 / 34%);
+}
+
+.live-toolbar-filter-menu[hidden] {
+  display: none;
+}
+
+.live-toolbar-filter-heading {
+  padding:
+    9px
+    11px;
+  border-bottom:
+    1px solid
+    var(--line);
+  color: #777d8a;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.live-toolbar-filter-option {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 32px;
+  padding:
+    7px
+    11px;
+  border: 0;
+  border-bottom:
+    1px solid
+    rgb(255 255 255 / 4%);
+  background: transparent;
+  color: #d8dbe3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.live-toolbar-filter-option:last-child {
+  border-bottom: 0;
+}
+
+.live-toolbar-filter-option:hover,
+.live-toolbar-filter-option.is-selected {
+  background:
+    rgb(108 99 255 / 12%);
+}
+
+.live-toolbar-filter-option.is-selected {
+  color: #bcb7ff;
+}
+
+.live-toolbar-filter-count {
+  min-width: 22px;
+  color: #777d8a;
+  font-size: 9px;
+  text-align: right;
+}
+
+.live-toolbar-filter-empty {
+  padding:
+    11px;
+  color: #777d8a;
+  font-size: 10px;
+}
+
+.toolbar-actions button {
+  max-width: 190px;
+}
+
+.toolbar-actions button [data-i18n] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:root[data-theme="light"]
+.toolbar-actions button.is-active {
+  border-color: #7771d8;
+  background: #eeedff;
+  color: #504bc5;
+}
+
+:root[data-theme="light"]
+.live-toolbar-filter-menu {
+  border-color: #d7d7dd;
+  background: #ffffff;
+  box-shadow:
+    0 14px 30px
+    rgb(24 24 32 / 14%);
+}
+
+:root[data-theme="light"]
+.live-toolbar-filter-heading,
+:root[data-theme="light"]
+.live-toolbar-filter-empty,
+:root[data-theme="light"]
+.live-toolbar-filter-count {
+  color: #747781;
+}
+
+:root[data-theme="light"]
+.live-toolbar-filter-option {
+  border-bottom-color: #eeeeF2;
+  color: #292b33;
+}
+
+:root[data-theme="light"]
+.live-toolbar-filter-option:hover,
+:root[data-theme="light"]
+.live-toolbar-filter-option.is-selected {
+  background: #efeeff;
+}
+
+:root[data-theme="light"]
+.live-toolbar-filter-option.is-selected {
+  color: #504bc5;
+}
