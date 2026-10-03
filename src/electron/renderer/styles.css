@@ -1968,3 +1968,40 @@ body.is-focus-mode .events {
   color: var(--text-secondary);
   background: var(--panel-raised);
 }
+/* zero-click startup */
+
+.server-startup-options {
+  display: grid;
+  gap: 4px;
+  margin: 12px 14px 0;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel-raised);
+}
+
+.server-startup-options .server-section-title {
+  margin-bottom: 3px;
+}
+
+.server-check-option {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 25px;
+  color: var(--text-secondary);
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.server-check-option input {
+  flex: 0 0 auto;
+  width: 13px;
+  height: 13px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.server-check-option:hover {
+  color: var(--text);
+}

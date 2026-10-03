@@ -176,6 +176,33 @@ export async function setupServerPanel(
       "server-parser"
     );
 
+  const defaultProfileCheckbox =
+    requireElement<HTMLInputElement>(
+      "server-default-profile"
+    );
+
+  const autoConnectCheckbox =
+    requireElement<HTMLInputElement>(
+      "server-auto-connect"
+    );
+
+  const rememberPassphraseCheckbox =
+    requireElement<HTMLInputElement>(
+      "server-remember-passphrase"
+    );
+
+  const launchAtLoginCheckbox =
+    requireElement<HTMLInputElement>(
+      "server-launch-at-login"
+    );
+
+  let startupPreferences =
+    await window.qcyLiveLog
+      .getPreferences();
+
+  let rememberedPassphrase =
+    false;
+
   let profiles: ServerProfile[] = [];
   let selectedProfileId: string | null =
     null;
@@ -320,6 +347,81 @@ export async function setupServerPanel(
       );
   }
 
+  async function refreshStartupOptions(
+    profile?: ServerProfile
+  ): Promise<void> {
+    const profileId =
+      profile?.id ??
+      null;
+
+    const nextPreferences =
+      await window.qcyLiveLog
+        .getPreferences();
+
+    if (
+      profileId !== null &&
+      selectedProfileId !==
+        profileId
+    ) {
+      return;
+    }
+
+    startupPreferences =
+      nextPreferences;
+
+    launchAtLoginCheckbox.checked =
+      startupPreferences
+        .launchAtLogin;
+
+    if (!profile) {
+      defaultProfileCheckbox.checked =
+        false;
+
+      autoConnectCheckbox.checked =
+        false;
+
+      rememberPassphraseCheckbox.checked =
+        false;
+
+      rememberedPassphrase =
+        false;
+
+      return;
+    }
+
+    const isDefault =
+      startupPreferences
+        .defaultServerProfileId ===
+      profile.id;
+
+    defaultProfileCheckbox.checked =
+      isDefault;
+
+    autoConnectCheckbox.checked =
+      isDefault &&
+      startupPreferences
+        .autoConnect;
+
+    const stored =
+      await window.qcyLiveLog
+        .hasRememberedPassphrase(
+          profile.id
+        );
+
+    if (
+      selectedProfileId !==
+      profile.id
+    ) {
+      return;
+    }
+
+    rememberedPassphrase =
+      stored;
+
+    rememberPassphraseCheckbox.checked =
+      stored;
+  }
+
   function resetForm(): void {
     form.reset();
 
@@ -417,6 +519,10 @@ export async function setupServerPanel(
 
     updateModeLabels();
     renderProfiles();
+
+    void refreshStartupOptions(
+      profile
+    );
 
     setStatus(
       translate(
@@ -562,6 +668,27 @@ export async function setupServerPanel(
               .deleteServerProfile(
                 profile.id
               );
+
+          await window.qcyLiveLog
+            .forgetPassphrase(
+              profile.id
+            );
+
+          if (
+            startupPreferences
+              .defaultServerProfileId ===
+            profile.id
+          ) {
+            startupPreferences =
+              await window.qcyLiveLog
+                .updateStartupPreferences({
+                  defaultServerProfileId:
+                    null,
+
+                  autoConnect:
+                    false
+                });
+          }
 
           if (
             selectedProfileId ===
@@ -1071,6 +1198,31 @@ export async function setupServerPanel(
     }
   );
 
+  autoConnectCheckbox.addEventListener(
+    "change",
+    () => {
+      if (
+        autoConnectCheckbox
+          .checked
+      ) {
+        defaultProfileCheckbox.checked =
+          true;
+      }
+    }
+  );
+
+  defaultProfileCheckbox.addEventListener(
+    "change",
+    () => {
+      if (
+        !defaultProfileCheckbox
+          .checked
+      ) {
+        autoConnectCheckbox.checked =
+          false;
+      }
+    }
+  );
   form.addEventListener(
     "submit",
     async (
@@ -1104,11 +1256,14 @@ export async function setupServerPanel(
           "server-project-suffix"
         );
 
+      const profileId =
+        selectedProfileId ??
+        window.crypto.randomUUID();
+
       const profile:
         ServerProfileInput = {
           id:
-            selectedProfileId ??
-            undefined,
+            profileId,
 
           name:
             readInput(
@@ -1177,6 +1332,85 @@ export async function setupServerPanel(
             .saveServerProfile(
               profile
             );
+
+        if (
+          rememberPassphraseCheckbox
+            .checked
+        ) {
+          if (
+            passphraseInput.value !== ""
+          ) {
+            await window.qcyLiveLog
+              .rememberPassphrase(
+                profileId,
+                passphraseInput.value
+              );
+
+            rememberedPassphrase =
+              true;
+          } else if (
+            !rememberedPassphrase
+          ) {
+            throw new Error(
+              "Enter the SSH passphrase before enabling secure passphrase storage."
+            );
+          }
+        } else {
+          await window.qcyLiveLog
+            .forgetPassphrase(
+              profileId
+            );
+
+          rememberedPassphrase =
+            false;
+        }
+
+        const wasDefault =
+          startupPreferences
+            .defaultServerProfileId ===
+          profileId;
+
+        let nextDefaultProfileId =
+          startupPreferences
+            .defaultServerProfileId;
+
+        let nextAutoConnect =
+          startupPreferences
+            .autoConnect;
+
+        if (
+          defaultProfileCheckbox
+            .checked ||
+          autoConnectCheckbox
+            .checked
+        ) {
+          nextDefaultProfileId =
+            profileId;
+
+          nextAutoConnect =
+            autoConnectCheckbox
+              .checked;
+        } else if (wasDefault) {
+          nextDefaultProfileId =
+            null;
+
+          nextAutoConnect =
+            false;
+        }
+
+        startupPreferences =
+          await window.qcyLiveLog
+            .updateStartupPreferences({
+              defaultServerProfileId:
+                nextDefaultProfileId,
+
+              autoConnect:
+                nextAutoConnect,
+
+              launchAtLogin:
+                launchAtLoginCheckbox
+                  .checked
+            });
 
         renderProfiles();
         resetForm();

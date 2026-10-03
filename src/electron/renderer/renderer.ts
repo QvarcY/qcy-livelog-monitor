@@ -246,6 +246,147 @@ function setShellStatus(
   );
 }
 
+function setStartupProjectMessage(
+  message: string
+): void {
+  const empty =
+    document.querySelector<HTMLElement>(
+      "#project-list .project-empty"
+    );
+
+  if (empty) {
+    empty.textContent =
+      message;
+  }
+}
+
+function renderStartupProjects(
+  logs: Array<{
+    domain: string;
+    fileName: string;
+  }>
+): void {
+  const list =
+    requireElement<HTMLDivElement>(
+      "project-list"
+    );
+
+  const count =
+    requireElement<HTMLSpanElement>(
+      "project-count"
+    );
+
+  for (
+    const row of Array.from(
+      list.querySelectorAll(
+        '.project-row[data-project-id]'
+      )
+    )
+  ) {
+    row.remove();
+  }
+
+  list.querySelector(
+    ".project-empty"
+  )?.remove();
+
+  count.textContent =
+    String(
+      logs.length
+    );
+
+  const allProjects =
+    list.querySelector(
+      ".project-row"
+    );
+
+  const allValue =
+    allProjects?.querySelector<HTMLElement>(
+      ".project-value"
+    );
+
+  if (allValue) {
+    allValue.textContent =
+      String(
+        logs.length
+      );
+  }
+
+  for (const log of logs) {
+    const row =
+      document.createElement(
+        "button"
+      );
+
+    row.type =
+      "button";
+
+    row.className =
+      "project-row";
+
+    row.dataset.projectId =
+      log.domain;
+
+    const state =
+      document.createElement(
+        "span"
+      );
+
+    state.className =
+      "project-state";
+
+    const main =
+      document.createElement(
+        "span"
+      );
+
+    main.className =
+      "project-main";
+
+    const name =
+      document.createElement(
+        "strong"
+      );
+
+    name.textContent =
+      log.domain;
+
+    const source =
+      document.createElement(
+        "small"
+      );
+
+    source.textContent =
+      log.fileName;
+
+    main.append(
+      name,
+      source
+    );
+
+    const value =
+      document.createElement(
+        "span"
+      );
+
+    value.className =
+      "project-value";
+
+    value.textContent =
+      "—";
+
+    row.append(
+      state,
+      main,
+      value
+    );
+
+    list.append(
+      row
+    );
+  }
+}
+
 async function boot(): Promise<void> {
   buildEmptyTimeline();
 
@@ -319,6 +460,71 @@ async function boot(): Promise<void> {
     await setupServerPanel(
       () =>
         preferences.language
+    );
+
+  void window.qcyLiveLog
+    .bootstrapStartup()
+    .then(
+      startup => {
+        if (
+          startup.status ===
+          "ready"
+        ) {
+          renderStartupProjects(
+            startup.logs
+          );
+
+          return;
+        }
+
+        if (
+          startup.status ===
+          "passphrase-required"
+        ) {
+          setStartupProjectMessage(
+            translate(
+              preferences.language,
+              "startupPassphraseRequired"
+            )
+          );
+
+          return;
+        }
+
+        if (
+          startup.status ===
+          "profile-missing"
+        ) {
+          setStartupProjectMessage(
+            translate(
+              preferences.language,
+              "startupProfileMissing"
+            )
+          );
+
+          return;
+        }
+
+        if (
+          startup.status ===
+          "host-key-trust-required"
+        ) {
+          setStartupProjectMessage(
+            translate(
+              preferences.language,
+              "startupHostKeyRequired"
+            )
+          );
+        }
+      }
+    )
+    .catch(
+      (error: unknown) => {
+        console.error(
+          "Automatic SSH startup failed:",
+          error
+        );
+      }
     );
 
   authorLink.addEventListener(

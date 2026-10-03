@@ -98,7 +98,7 @@
         </span>
       </div>
 
-      <div class="project-list">
+      <div id="project-list" class="project-list">
         <button class="project-row is-active">
           <span class="project-state"></span>
 
@@ -795,6 +795,58 @@
               <small data-i18n="projectSuffixHelp">
                 Optional suffix removed from discovered log filenames.
               </small>
+            </label>
+          </section>
+
+          <section class="server-startup-options">
+            <div class="server-section-title">
+              <strong data-i18n="startupOptions">
+                Startup
+              </strong>
+            </div>
+
+            <label class="server-check-option">
+              <input
+                id="server-default-profile"
+                type="checkbox"
+              >
+
+              <span data-i18n="defaultProfile">
+                Use as default server
+              </span>
+            </label>
+
+            <label class="server-check-option">
+              <input
+                id="server-auto-connect"
+                type="checkbox"
+              >
+
+              <span data-i18n="autoConnect">
+                Connect automatically on startup
+              </span>
+            </label>
+
+            <label class="server-check-option">
+              <input
+                id="server-remember-passphrase"
+                type="checkbox"
+              >
+
+              <span data-i18n="rememberPassphrase">
+                Remember passphrase securely on this computer
+              </span>
+            </label>
+
+            <label class="server-check-option">
+              <input
+                id="server-launch-at-login"
+                type="checkbox"
+              >
+
+              <span data-i18n="launchAtLogin">
+                Start with Windows
+              </span>
             </label>
           </section>
 

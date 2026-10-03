@@ -18,6 +18,12 @@ export interface AppPreferences {
   language: AppLanguage;
   theme: AppTheme;
   alwaysOnTop: boolean;
+
+  defaultServerProfileId:
+    string | null;
+
+  autoConnect: boolean;
+  launchAtLogin: boolean;
 }
 
 function getDefaultPreferences(
@@ -25,12 +31,20 @@ function getDefaultPreferences(
 ): AppPreferences {
   return {
     language:
-      locale.toLowerCase().startsWith("lv")
+      locale
+        .toLowerCase()
+        .startsWith("lv")
         ? "lv"
         : "en",
 
     theme: "dark",
-    alwaysOnTop: false
+    alwaysOnTop: false,
+
+    defaultServerProfileId:
+      null,
+
+    autoConnect: false,
+    launchAtLogin: false
   };
 }
 
@@ -48,28 +62,24 @@ function normalizeLanguage(
   value: unknown,
   fallback: AppLanguage
 ): AppLanguage {
-  if (
+  return (
     value === "en" ||
     value === "lv"
-  ) {
-    return value;
-  }
-
-  return fallback;
+  )
+    ? value
+    : fallback;
 }
 
 function normalizeTheme(
   value: unknown,
   fallback: AppTheme
 ): AppTheme {
-  if (
+  return (
     value === "dark" ||
     value === "light"
-  ) {
-    return value;
-  }
-
-  return fallback;
+  )
+    ? value
+    : fallback;
 }
 
 function normalizeBoolean(
@@ -79,6 +89,31 @@ function normalizeBoolean(
   return typeof value === "boolean"
     ? value
     : fallback;
+}
+
+function normalizeProfileId(
+  value: unknown,
+  fallback: string | null
+): string | null {
+  if (value === null) {
+    return null;
+  }
+
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const id =
+    value.trim();
+
+  if (
+    id === "" ||
+    !/^[a-z0-9][a-z0-9._-]*$/iu.test(id)
+  ) {
+    return fallback;
+  }
+
+  return id;
 }
 
 function preferencesFile(
@@ -95,13 +130,18 @@ export async function readPreferences(
   locale: string
 ): Promise<AppPreferences> {
   const defaults =
-    getDefaultPreferences(locale);
+    getDefaultPreferences(
+      locale
+    );
 
   try {
-    const raw = await readFile(
-      preferencesFile(userDataPath),
-      "utf8"
-    );
+    const raw =
+      await readFile(
+        preferencesFile(
+          userDataPath
+        ),
+        "utf8"
+      );
 
     const parsed: unknown =
       JSON.parse(raw);
@@ -111,20 +151,41 @@ export async function readPreferences(
     }
 
     return {
-      language: normalizeLanguage(
-        parsed.language,
-        defaults.language
-      ),
+      language:
+        normalizeLanguage(
+          parsed.language,
+          defaults.language
+        ),
 
-      theme: normalizeTheme(
-        parsed.theme,
-        defaults.theme
-      ),
+      theme:
+        normalizeTheme(
+          parsed.theme,
+          defaults.theme
+        ),
 
-      alwaysOnTop: normalizeBoolean(
-        parsed.alwaysOnTop,
-        defaults.alwaysOnTop
-      )
+      alwaysOnTop:
+        normalizeBoolean(
+          parsed.alwaysOnTop,
+          defaults.alwaysOnTop
+        ),
+
+      defaultServerProfileId:
+        normalizeProfileId(
+          parsed.defaultServerProfileId,
+          defaults.defaultServerProfileId
+        ),
+
+      autoConnect:
+        normalizeBoolean(
+          parsed.autoConnect,
+          defaults.autoConnect
+        ),
+
+      launchAtLogin:
+        normalizeBoolean(
+          parsed.launchAtLogin,
+          defaults.launchAtLogin
+        )
     };
   } catch {
     return defaults;
@@ -148,20 +209,46 @@ export async function updatePreferences(
       : {};
 
   const next: AppPreferences = {
-    language: normalizeLanguage(
-      input.language,
-      current.language
-    ),
+    language:
+      normalizeLanguage(
+        input.language,
+        current.language
+      ),
 
-    theme: normalizeTheme(
-      input.theme,
-      current.theme
-    ),
+    theme:
+      normalizeTheme(
+        input.theme,
+        current.theme
+      ),
 
-    alwaysOnTop: normalizeBoolean(
-      input.alwaysOnTop,
-      current.alwaysOnTop
-    )
+    alwaysOnTop:
+      normalizeBoolean(
+        input.alwaysOnTop,
+        current.alwaysOnTop
+      ),
+
+    defaultServerProfileId:
+      input.defaultServerProfileId ===
+        undefined
+        ? current
+            .defaultServerProfileId
+        : normalizeProfileId(
+            input.defaultServerProfileId,
+            current
+              .defaultServerProfileId
+          ),
+
+    autoConnect:
+      normalizeBoolean(
+        input.autoConnect,
+        current.autoConnect
+      ),
+
+    launchAtLogin:
+      normalizeBoolean(
+        input.launchAtLogin,
+        current.launchAtLogin
+      )
   };
 
   await mkdir(
@@ -172,7 +259,9 @@ export async function updatePreferences(
   );
 
   await writeFile(
-    preferencesFile(userDataPath),
+    preferencesFile(
+      userDataPath
+    ),
     JSON.stringify(
       next,
       null,

@@ -16,6 +16,10 @@ import type {
   DiscoveredLog
 } from "../discovery.js";
 
+import type {
+  StartupBootstrapResult
+} from "./startup.js";
+
 export interface AppInfo {
   name: string;
   author: string;
@@ -43,12 +47,24 @@ export interface AppPreferences {
   language: AppLanguage;
   theme: AppTheme;
   alwaysOnTop: boolean;
+
+  defaultServerProfileId:
+    string | null;
+
+  autoConnect: boolean;
+  launchAtLogin: boolean;
 }
 
 export interface AppPreferencesPatch {
   language?: AppLanguage;
   theme?: AppTheme;
   alwaysOnTop?: boolean;
+
+  defaultServerProfileId?:
+    string | null;
+
+  autoConnect?: boolean;
+  launchAtLogin?: boolean;
 }
 
 export interface QcYLiveLogApi {
@@ -67,6 +83,26 @@ export interface QcYLiveLogApi {
 
   setAlwaysOnTop(
     enabled: boolean
+  ): Promise<boolean>;
+
+  updateStartupPreferences(
+    patch: AppPreferencesPatch
+  ): Promise<AppPreferences>;
+
+  bootstrapStartup():
+    Promise<StartupBootstrapResult>;
+
+  rememberPassphrase(
+    profileId: string,
+    passphrase: string
+  ): Promise<boolean>;
+
+  forgetPassphrase(
+    profileId: string
+  ): Promise<boolean>;
+
+  hasRememberedPassphrase(
+    profileId: string
   ): Promise<boolean>;
 
   listServerProfiles():

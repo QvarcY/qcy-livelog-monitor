@@ -43,6 +43,16 @@ import {
   discoverRemoteLogs
 } from "./log-discovery.js";
 
+import {
+  bootstrapStartup
+} from "./startup.js";
+
+import {
+  forgetSshPassphrase,
+  hasSshPassphrase,
+  rememberSshPassphrase
+} from "./secure-credentials.js";
+
 import type {
   ServerProfileInput
 } from "../server-profile.js";
@@ -84,6 +94,32 @@ function assertTrustedSender(
       "Rejected IPC call from untrusted renderer."
     );
   }
+}
+
+function applyLaunchAtLogin(
+  enabled: boolean
+): void {
+  if (
+    process.platform !== "win32"
+  ) {
+    return;
+  }
+
+  if (!app.isPackaged) {
+    app.setLoginItemSettings({
+      openAtLogin: enabled,
+      path: process.execPath,
+      args: [
+        app.getAppPath()
+      ]
+    });
+
+    return;
+  }
+
+  app.setLoginItemSettings({
+    openAtLogin: enabled
+  });
 }
 
 function registerIpc(): void {
@@ -188,6 +224,105 @@ function registerIpc(): void {
       );
 
       return window.isAlwaysOnTop();
+    }
+  );
+
+  ipcMain.handle(
+    "startup:update",
+    async (
+      event: IpcMainInvokeEvent,
+      patch: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      const preferences =
+        await updatePreferences(
+          app.getPath(
+            "userData"
+          ),
+          app.getLocale(),
+          patch
+        );
+
+      applyLaunchAtLogin(
+        preferences
+          .launchAtLogin
+      );
+
+      return preferences;
+    }
+  );
+
+  ipcMain.handle(
+    "startup:bootstrap",
+    async (
+      event: IpcMainInvokeEvent
+    ) => {
+      assertTrustedSender(event);
+
+      return bootstrapStartup(
+        app.getPath(
+          "userData"
+        ),
+        app.getLocale()
+      );
+    }
+  );
+
+  ipcMain.handle(
+    "credentials:remember",
+    async (
+      event: IpcMainInvokeEvent,
+      profileId: unknown,
+      passphrase: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      await rememberSshPassphrase(
+        app.getPath(
+          "userData"
+        ),
+        profileId,
+        passphrase
+      );
+
+      return true;
+    }
+  );
+
+  ipcMain.handle(
+    "credentials:forget",
+    async (
+      event: IpcMainInvokeEvent,
+      profileId: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      await forgetSshPassphrase(
+        app.getPath(
+          "userData"
+        ),
+        profileId
+      );
+
+      return true;
+    }
+  );
+
+  ipcMain.handle(
+    "credentials:has",
+    async (
+      event: IpcMainInvokeEvent,
+      profileId: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      return hasSshPassphrase(
+        app.getPath(
+          "userData"
+        ),
+        profileId
+      );
     }
   );
 
@@ -399,7 +534,7 @@ app.setName(
   BRAND.productName
 );
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
 
   session.defaultSession
@@ -412,6 +547,19 @@ app.whenReady().then(() => {
         callback(false);
       }
     );
+
+  const startupPreferences =
+    await readPreferences(
+      app.getPath(
+        "userData"
+      ),
+      app.getLocale()
+    );
+
+  applyLaunchAtLogin(
+    startupPreferences
+      .launchAtLogin
+  );
 
   registerIpc();
   createWindow();

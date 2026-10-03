@@ -72,6 +72,45 @@ const api = Object.freeze({
       "logs:discover",
       request,
       passphrase
+    ),
+
+  updateStartupPreferences: (
+    patch
+  ) =>
+    ipcRenderer.invoke(
+      "startup:update",
+      patch
+    ),
+
+  bootstrapStartup: () =>
+    ipcRenderer.invoke(
+      "startup:bootstrap"
+    ),
+
+  rememberPassphrase: (
+    profileId,
+    passphrase
+  ) =>
+    ipcRenderer.invoke(
+      "credentials:remember",
+      profileId,
+      passphrase
+    ),
+
+  forgetPassphrase: (
+    profileId
+  ) =>
+    ipcRenderer.invoke(
+      "credentials:forget",
+      profileId
+    ),
+
+  hasRememberedPassphrase: (
+    profileId
+  ) =>
+    ipcRenderer.invoke(
+      "credentials:has",
+      profileId
     )
 });
 

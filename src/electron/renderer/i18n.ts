@@ -122,6 +122,20 @@ const en = {
   forgetHostKeyConfirm:
     "Forget the trusted server key? The next connection will ask you to trust a new fingerprint.",
 
+  startupOptions: "Startup",
+  defaultProfile: "Use as default server",
+  autoConnect:
+    "Connect automatically on startup",
+  rememberPassphrase:
+    "Remember passphrase securely on this computer",
+  launchAtLogin: "Start with Windows",
+  startupPassphraseRequired:
+    "SSH passphrase is required for automatic connection.",
+  startupProfileMissing:
+    "The default server profile no longer exists.",
+  startupHostKeyRequired:
+    "The default server must have a trusted SSH host key.",
+
   discoverLogs: "Discover logs",
   discoveringLogs: "Discovering log files…",
   discoveredLogs: "Discovered logs",
@@ -269,6 +283,20 @@ const lv: Record<
   forgetHostKey: "Aizmirst atslēgu",
   forgetHostKeyConfirm:
     "Aizmirst uzticēto servera atslēgu? Nākamajā savienojumā būs jāapstiprina jauns fingerprints.",
+
+  startupOptions: "Palaišana",
+  defaultProfile: "Lietot kā noklusēto serveri",
+  autoConnect:
+    "Pieslēgties automātiski pēc palaišanas",
+  rememberPassphrase:
+    "Droši atcerēties passphrase šajā datorā",
+  launchAtLogin: "Palaist kopā ar Windows",
+  startupPassphraseRequired:
+    "Automātiskajam savienojumam nepieciešama SSH passphrase.",
+  startupProfileMissing:
+    "Noklusētais servera profils vairs neeksistē.",
+  startupHostKeyRequired:
+    "Noklusētajam serverim jābūt uzticētai SSH host atslēgai.",
 
   discoverLogs: "Atklāt logus",
   discoveringLogs: "Meklē logu failus…",
