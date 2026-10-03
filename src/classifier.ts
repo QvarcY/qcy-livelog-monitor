@@ -3,14 +3,15 @@ import type { AccessLogEntry } from "./parser.js";
 export type LogCategory =
   | "GREETING"
   | "WP_PROBE"
+  | "WP_TRAFFIC"
   | "SECURITY_PROBE"
   | "BOT"
   | "SERVER_ERROR"
   | "NOT_FOUND"
   | "VISITOR";
 
-const wpProbe =
-  /\/(?:wp-admin|wp-login\.php|wp-content|wp-includes|xmlrpc\.php|wordpress(?:\/|$))/i;
+const wpPath =
+  /\/(?:wp-admin(?:\/|$)|wp-login\.php(?:$|[?/])|wp-content(?:\/|$)|wp-includes(?:\/|$)|wp-json(?:\/|$)|xmlrpc\.php(?:$|[?/])|wordpress(?:\/|$))/i;
 
 const securityProbe =
   /(?:\/\.env(?:$|[/?])|\/\.git(?:\/|$)|\/phpmyadmin(?:\/|$)|\/vendor\/phpunit|\/cgi-bin(?:\/|$))/i;
@@ -31,10 +32,6 @@ export function classify(
     return "GREETING";
   }
 
-  if (wpProbe.test(entry.path)) {
-    return "WP_PROBE";
-  }
-
   if (securityProbe.test(entry.path)) {
     return "SECURITY_PROBE";
   }
@@ -43,8 +40,19 @@ export function classify(
     return "SERVER_ERROR";
   }
 
+  if (
+    wpPath.test(entry.path) &&
+    entry.status >= 400
+  ) {
+    return "WP_PROBE";
+  }
+
   if (botUserAgent.test(entry.userAgent)) {
     return "BOT";
+  }
+
+  if (wpPath.test(entry.path)) {
+    return "WP_TRAFFIC";
   }
 
   if (entry.status === 404) {

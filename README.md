@@ -23,6 +23,7 @@ Current default log:
 - `NOT_FOUND`
 - `SERVER_ERROR`
 - `WP_PROBE`
+- `WP_TRAFFIC`
 - `SECURITY_PROBE`
 - `GREETING`
 

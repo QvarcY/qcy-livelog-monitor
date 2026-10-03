@@ -12,7 +12,7 @@
 ## Phase 1 — Multi-project collector
 
 - [x] discover available `*-ssl_log` files
-- [ ] monitor multiple projects
+- [x] monitor multiple projects
 - [ ] reconnect automatically
 - [ ] detect log rotation
 - [ ] normalize project names

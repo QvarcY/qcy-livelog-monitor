@@ -14,6 +14,7 @@ const RESET = "\x1b[0m";
 const COLORS: Record<LogCategory, string> = {
   GREETING: "\x1b[95m",
   WP_PROBE: "\x1b[93m",
+  WP_TRAFFIC: "\x1b[94m",
   SECURITY_PROBE: "\x1b[91m",
   BOT: "\x1b[96m",
   SERVER_ERROR: "\x1b[91m",
