@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="
+      default-src 'self';
+      script-src 'self';
+      style-src 'self';
+      img-src 'self' data:;
+      connect-src 'none';
+      object-src 'none';
+      base-uri 'none';
+      form-action 'none'
+    "
+  >
+
+  <title>QcY LiveLog Monitor</title>
+
+  <link
+    rel="stylesheet"
+    href="./styles.css"
+  >
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-symbol">
+          A
+        </div>
+
+        <div class="brand-copy">
+          <strong>
+            QcY LiveLog Monitor
+          </strong>
+
+          <span>
+            access monitor
+          </span>
+        </div>
+      </div>
+
+      <nav class="primary-nav">
+        <button class="nav-item is-active">
+          <span class="nav-icon">
+            ◉
+          </span>
+
+          <span>
+            Live
+          </span>
+        </button>
+
+        <button class="nav-item" disabled>
+          <span class="nav-icon">
+            ◫
+          </span>
+
+          <span>
+            History
+          </span>
+        </button>
+      </nav>
+
+      <div class="sidebar-heading">
+        <span>
+          Projects
+        </span>
+
+        <span id="project-count">
+          —
+        </span>
+      </div>
+
+      <div class="project-list">
+        <button class="project-row is-active">
+          <span class="project-state"></span>
+
+          <span class="project-main">
+            <strong>
+              All projects
+            </strong>
+
+            <small>
+              live stream
+            </small>
+          </span>
+
+          <span class="project-value">
+            —
+          </span>
+        </button>
+
+        <div class="project-empty">
+          Projects will appear after SSH connection.
+        </div>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="brand-links">
+          <button
+            id="author-link"
+            class="brand-link"
+            type="button"
+          >
+            By QvarcY
+          </button>
+
+          <button
+            id="support-link"
+            class="brand-link support-link"
+            type="button"
+          >
+            Buy Me a Coffee
+          </button>
+        </div>
+
+        <div class="runtime-mini">
+          <span id="runtime-platform">
+            QcY LiveLog Monitor
+          </span>
+
+          <span id="app-version">
+            v—
+          </span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="context-bar">
+        <div class="breadcrumbs">
+          <span>
+            AREA
+          </span>
+
+          <span class="breadcrumb-separator">
+            /
+          </span>
+
+          <strong>
+            Live
+          </strong>
+        </div>
+
+        <div
+          id="shell-status"
+          class="connection-status"
+        >
+          <span class="connection-dot"></span>
+
+          <span>
+            Starting
+          </span>
+        </div>
+      </header>
+
+      <section class="toolbar">
+        <label class="search">
+          <span class="search-icon">
+            /
+          </span>
+
+          <input
+            type="search"
+            placeholder="Search path, IP, project or user agent"
+            disabled
+          >
+
+          <kbd>
+            /
+          </kbd>
+        </label>
+
+        <div class="toolbar-actions">
+          <button disabled>
+            Project
+            <span>⌄</span>
+          </button>
+
+          <button disabled>
+            Type
+            <span>⌄</span>
+          </button>
+
+          <button disabled>
+            Status
+            <span>⌄</span>
+          </button>
+
+          <button
+            class="pause-button"
+            disabled
+          >
+            Ⅱ
+            Pause
+          </button>
+        </div>
+      </section>
+
+      <section class="activity">
+        <div class="activity-header">
+          <div>
+            <strong>
+              Activity
+            </strong>
+
+            <span>
+              request volume
+            </span>
+          </div>
+
+          <div class="activity-range">
+            live · last 60s
+          </div>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-grid">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <div
+            id="timeline-bars"
+            class="timeline-bars"
+            aria-hidden="true"
+          ></div>
+
+          <div class="timeline-empty">
+            Waiting for live stream
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="events">
+          <div class="events-header">
+            <div>
+              <strong>
+                Live requests
+              </strong>
+
+              <span id="event-count">
+                0 events
+              </span>
+            </div>
+
+            <div class="stream-hint">
+              newest first
+            </div>
+          </div>
+
+          <div class="event-columns">
+            <span class="column-time">
+              Time
+            </span>
+
+            <span>
+              Project / request
+            </span>
+
+            <span>
+              Type
+            </span>
+
+            <span>
+              Status
+            </span>
+
+            <span>
+              Delay
+            </span>
+          </div>
+
+          <div
+            id="event-list"
+            class="event-list"
+          >
+            <div class="empty-event">
+              <div class="empty-event-mark">
+                ›_
+              </div>
+
+              <div>
+                <strong>
+                  No requests yet
+                </strong>
+
+                <p>
+                  Connect the collector and incoming
+                  access-log entries will appear here
+                  in real time.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="details">
+          <div class="details-header">
+            <div>
+              <strong>
+                Event details
+              </strong>
+
+              <span>
+                inspect request
+              </span>
+            </div>
+
+            <button
+              class="details-close"
+              disabled
+              aria-label="Close details"
+            >
+              ×
+            </button>
+          </div>
+
+          <div class="details-empty">
+            <div class="details-glyph">
+              ↳
+            </div>
+
+            <strong>
+              Select a request
+            </strong>
+
+            <p>
+              Request metadata, IP, user agent,
+              referrer and raw access-log data
+              will appear here.
+            </p>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-label">
+              Connection
+            </div>
+
+            <div class="detail-pair">
+              <span>
+                Transport
+              </span>
+
+              <strong>
+                SSH
+              </strong>
+            </div>
+
+            <div class="detail-pair">
+              <span>
+                Collector
+              </span>
+
+              <strong class="muted">
+                offline
+              </strong>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="statusbar">
+        <div>
+          <span class="status-indicator"></span>
+
+          <span>
+            collector offline
+          </span>
+        </div>
+
+        <div class="statusbar-right">
+          <span>
+            0 events
+          </span>
+
+          <span class="status-separator">
+            ·
+          </span>
+
+          <span>
+            delay —
+          </span>
+
+          <span class="status-separator">
+            ·
+          </span>
+
+          <span>
+            secure renderer
+          </span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <script
+    type="module"
+    src="./renderer.js"
+  ></script>
+</body>
+</html>
