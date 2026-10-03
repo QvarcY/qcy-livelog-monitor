@@ -12,6 +12,10 @@ import {
   type DiscoveredLog
 } from "./discovery.js";
 import { parseAccessLogLine } from "./parser.js";
+import {
+  calculateObservedDelayMs,
+  formatObservedDelay
+} from "./log-time.js";
 import { parseTailControlLine } from "./tail-events.js";
 import {
   classify,
@@ -73,13 +77,25 @@ function printEntry(
   const category = classify(entry);
   const color = COLORS[category];
 
+  const observedDelayMs =
+    calculateObservedDelayMs(
+      entry.timestamp
+    );
+
+  const delayLabel =
+    observedDelayMs === null
+      ? "delay n/a"
+      : `delay ${formatObservedDelay(
+          observedDelayMs
+        )}`;
+
   console.log(
     `[${domainLabel}] ` +
       `${color}[${category.padEnd(14)}]${RESET} ` +
       `${entry.status} ` +
       `${entry.method.padEnd(6)} ` +
       `${entry.path} ` +
-      `(${entry.ip})`
+      `(${entry.ip}) [${delayLabel}]`
   );
 
   if (category === "GREETING") {

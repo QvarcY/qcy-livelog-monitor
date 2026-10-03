@@ -16,7 +16,7 @@
 - [x] reconnect automatically
 - [x] detect log rotation
 - [x] normalize project names
-- [ ] calculate observed hosting log delay
+- [x] calculate observed hosting log delay
 
 ## Phase 2 — Desktop application
 
