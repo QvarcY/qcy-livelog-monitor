@@ -1,3 +1,7 @@
+import {
+  randomUUID
+} from "node:crypto";
+
 import path from "node:path";
 import {
   fileURLToPath,
@@ -9,6 +13,7 @@ import {
   BrowserWindow,
   ipcMain,
   Menu,
+  dialog,
   session,
   shell,
   type IpcMainInvokeEvent
@@ -23,6 +28,20 @@ import {
   readPreferences,
   updatePreferences
 } from "./settings.js";
+
+import {
+  deleteServerProfile,
+  readServerProfiles,
+  upsertServerProfile
+} from "./server-profiles.js";
+
+import {
+  testSshConnection
+} from "./ssh-test.js";
+
+import type {
+  ServerProfileInput
+} from "../server-profile.js";
 
 const moduleFile = fileURLToPath(
   import.meta.url
@@ -165,6 +184,141 @@ function registerIpc(): void {
       );
 
       return window.isAlwaysOnTop();
+    }
+  );
+
+  ipcMain.handle(
+    "profiles:list",
+    async (
+      event: IpcMainInvokeEvent
+    ) => {
+      assertTrustedSender(event);
+
+      return readServerProfiles(
+        app.getPath("userData")
+      );
+    }
+  );
+
+  ipcMain.handle(
+    "profiles:save",
+    async (
+      event: IpcMainInvokeEvent,
+      input: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      if (
+        typeof input !== "object" ||
+        input === null ||
+        Array.isArray(input)
+      ) {
+        throw new Error(
+          "Invalid server profile."
+        );
+      }
+
+      const source =
+        input as ServerProfileInput;
+
+      const existingId =
+        typeof source.id === "string"
+          ? source.id.trim()
+          : "";
+
+      const profileInput: ServerProfileInput = {
+        ...source,
+        id:
+          existingId !== ""
+            ? existingId
+            : `server-${randomUUID()}`
+      };
+
+      return upsertServerProfile(
+        app.getPath("userData"),
+        profileInput
+      );
+    }
+  );
+
+  ipcMain.handle(
+    "profiles:delete",
+    async (
+      event: IpcMainInvokeEvent,
+      profileId: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      if (
+        typeof profileId !== "string" ||
+        profileId.trim() === ""
+      ) {
+        throw new Error(
+          "Invalid server profile id."
+        );
+      }
+
+      return deleteServerProfile(
+        app.getPath("userData"),
+        profileId.trim()
+      );
+    }
+  );
+
+  ipcMain.handle(
+    "ssh:select-private-key",
+    async (
+      event: IpcMainInvokeEvent
+    ) => {
+      assertTrustedSender(event);
+
+      const window =
+        BrowserWindow.fromWebContents(
+          event.sender
+        );
+
+      const options = {
+        title:
+          "Select SSH private key",
+        properties: [
+          "openFile"
+        ] as Array<"openFile">
+      };
+
+      const result =
+        window
+          ? await dialog.showOpenDialog(
+              window,
+              options
+            )
+          : await dialog.showOpenDialog(
+              options
+            );
+
+      if (
+        result.canceled ||
+        result.filePaths.length === 0
+      ) {
+        return null;
+      }
+
+      return result.filePaths[0];
+    }
+  );
+
+  ipcMain.handle(
+    "ssh:test",
+    async (
+      event: IpcMainInvokeEvent,
+      ssh: unknown,
+      passphrase: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      return testSshConnection(
+        ssh,
+        passphrase
+      );
     }
   );
 }

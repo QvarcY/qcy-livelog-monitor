@@ -1,3 +1,13 @@
+import type {
+  ServerProfile,
+  ServerProfileInput,
+  SshConnectionProfileInput
+} from "../server-profile.js";
+
+import type {
+  SshConnectionTestResult
+} from "./ssh-test.js";
+
 export interface AppInfo {
   name: string;
   author: string;
@@ -50,6 +60,25 @@ export interface QcYLiveLogApi {
   setAlwaysOnTop(
     enabled: boolean
   ): Promise<boolean>;
+
+  listServerProfiles():
+    Promise<ServerProfile[]>;
+
+  saveServerProfile(
+    profile: ServerProfileInput
+  ): Promise<ServerProfile[]>;
+
+  deleteServerProfile(
+    profileId: string
+  ): Promise<ServerProfile[]>;
+
+  selectPrivateKey():
+    Promise<string | null>;
+
+  testSshConnection(
+    ssh: SshConnectionProfileInput,
+    passphrase?: string
+  ): Promise<SshConnectionTestResult>;
 }
 
 declare global {

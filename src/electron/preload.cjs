@@ -30,6 +30,38 @@ const api = Object.freeze({
     ipcRenderer.invoke(
       "window:set-always-on-top",
       enabled
+    ),
+
+  listServerProfiles: () =>
+    ipcRenderer.invoke(
+      "profiles:list"
+    ),
+
+  saveServerProfile: (profile) =>
+    ipcRenderer.invoke(
+      "profiles:save",
+      profile
+    ),
+
+  deleteServerProfile: (profileId) =>
+    ipcRenderer.invoke(
+      "profiles:delete",
+      profileId
+    ),
+
+  selectPrivateKey: () =>
+    ipcRenderer.invoke(
+      "ssh:select-private-key"
+    ),
+
+  testSshConnection: (
+    ssh,
+    passphrase
+  ) =>
+    ipcRenderer.invoke(
+      "ssh:test",
+      ssh,
+      passphrase
     )
 });
 

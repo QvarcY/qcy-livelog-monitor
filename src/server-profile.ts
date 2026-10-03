@@ -9,6 +9,13 @@ export interface SshConnectionProfile {
   privateKeyPath: string;
 }
 
+export interface SshConnectionProfileInput {
+  host?: unknown;
+  port?: unknown;
+  username?: unknown;
+  privateKeyPath?: unknown;
+}
+
 export interface LogSourceProfile {
   directory: string;
   pattern: string;
@@ -27,12 +34,7 @@ export interface ServerProfileInput {
   id?: unknown;
   name?: unknown;
 
-  ssh?: {
-    host?: unknown;
-    port?: unknown;
-    username?: unknown;
-    privateKeyPath?: unknown;
-  };
+  ssh?: SshConnectionProfileInput;
 
   logs?: {
     directory?: unknown;
@@ -122,6 +124,44 @@ function normalizeId(
   return id;
 }
 
+export function normalizeSshConnectionProfile(
+  input: unknown
+): SshConnectionProfile {
+  if (
+    typeof input !== "object" ||
+    input === null ||
+    Array.isArray(input)
+  ) {
+    throw new Error(
+      "SSH configuration is missing."
+    );
+  }
+
+  const record =
+    input as Record<string, unknown>;
+
+  return {
+    host: requireString(
+      record.host,
+      "SSH host"
+    ),
+
+    port: requirePort(
+      record.port ?? 22
+    ),
+
+    username: requireString(
+      record.username,
+      "SSH username"
+    ),
+
+    privateKeyPath: requireString(
+      record.privateKeyPath,
+      "Private key path"
+    )
+  };
+}
+
 export function normalizeServerProfile(
   input: ServerProfileInput
 ): ServerProfile {
@@ -150,26 +190,9 @@ export function normalizeServerProfile(
       "Profile name"
     ),
 
-    ssh: {
-      host: requireString(
-        input.ssh.host,
-        "SSH host"
-      ),
-
-      port: requirePort(
-        input.ssh.port ?? 22
-      ),
-
-      username: requireString(
-        input.ssh.username,
-        "SSH username"
-      ),
-
-      privateKeyPath: requireString(
-        input.ssh.privateKeyPath,
-        "Private key path"
-      )
-    },
+    ssh: normalizeSshConnectionProfile(
+      input.ssh
+    ),
 
     logs: {
       directory: requireString(
