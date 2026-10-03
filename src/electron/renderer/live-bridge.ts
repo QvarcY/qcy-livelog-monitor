@@ -32,6 +32,15 @@ let monitoredProjectFilter:
   Set<string> | null =
     null;
 
+let liveSearchQuery =
+  "";
+
+let liveUiPaused =
+  false;
+
+let liveSearchSuggestionIndex =
+  -1;
+
 let activityTimer:
   number | null =
     null;
@@ -1283,6 +1292,9 @@ function renderActivityLegend():
 
 function renderActivityTimeline():
   void {
+  if (liveUiPaused) {
+    return;
+  }
   const bars =
     document.getElementById(
       "live-activity-bars"
@@ -2468,6 +2480,1157 @@ function createRawRow(
   return row;
 }
 
+function normalizedLiveSearch(
+  value: unknown
+): string {
+  return String(
+    value ?? ""
+  )
+    .trim()
+    .toLowerCase();
+}
+
+function rawRequestMatchesSearch(
+  event: LiveRequestEvent
+): boolean {
+  const query =
+    normalizedLiveSearch(
+      liveSearchQuery
+    );
+
+  if (!query) {
+    return true;
+  }
+
+  return [
+    event.domain,
+    event.category,
+    event.ip,
+    event.method,
+    event.path,
+    event.protocol,
+    event.status,
+    event.bytes,
+    event.referer,
+    event.userAgent
+  ]
+    .map(
+      normalizedLiveSearch
+    )
+    .join("\n")
+    .includes(
+      query
+    );
+}
+
+function smartGroupMatchesSearch(
+  group: ActivityGroup
+): boolean {
+  const query =
+    normalizedLiveSearch(
+      liveSearchQuery
+    );
+
+  if (!query) {
+    return true;
+  }
+
+  if (
+    [
+      group.domain,
+      group.layer
+    ]
+      .map(
+        normalizedLiveSearch
+      )
+      .join("\n")
+      .includes(
+        query
+      )
+  ) {
+    return true;
+  }
+
+  return group.requests.some(
+    request =>
+      [
+        request.ip,
+        request.method,
+        request.path,
+        request.role,
+        request.status,
+        request.referer,
+        request.userAgent
+      ]
+        .map(
+          normalizedLiveSearch
+        )
+        .join("\n")
+        .includes(
+          query
+        )
+  );
+}
+
+function isLatvianUi():
+  boolean {
+  return document
+    .documentElement
+    .lang
+    .toLowerCase()
+    .startsWith(
+      "lv"
+    );
+}
+
+function updatePauseButton():
+  void {
+  const pause =
+    document.querySelector<
+      HTMLButtonElement
+    >(
+      ".pause-button"
+    );
+
+  if (!pause) {
+    return;
+  }
+
+  const label =
+    pause.querySelector<
+      HTMLSpanElement
+    >(
+      "[data-i18n='pause']"
+    );
+
+  if (label) {
+    label.textContent =
+      liveUiPaused
+        ? (
+            isLatvianUi()
+              ? "Atsākt"
+              : "Resume"
+          )
+        : (
+            isLatvianUi()
+              ? "Pauze"
+              : "Pause"
+          );
+  }
+
+  pause.classList.toggle(
+    "is-active",
+    liveUiPaused
+  );
+
+  pause.setAttribute(
+    "aria-pressed",
+    String(
+      liveUiPaused
+    )
+  );
+
+  pause.title =
+    liveUiPaused
+      ? (
+          isLatvianUi()
+            ? "Atsākt tiešraides attēlošanu"
+            : "Resume live rendering"
+        )
+      : (
+          isLatvianUi()
+            ? "Apturēt ekrāna atjaunošanu"
+            : "Pause screen updates"
+        );
+}
+
+type LiveSearchSuggestionKind =
+  | "project"
+  | "path"
+  | "ip"
+  | "method"
+  | "status"
+  | "type"
+  | "layer"
+  | "agent";
+
+type LiveSearchSuggestion = {
+  kind:
+    LiveSearchSuggestionKind;
+  value:
+    string;
+  searchValue:
+    string;
+};
+
+function searchSuggestionKindLabel(
+  kind: LiveSearchSuggestionKind
+): string {
+  const lv =
+    isLatvianUi();
+
+  const labels:
+    Record<
+      LiveSearchSuggestionKind,
+      [string, string]
+    > = {
+      project: [
+        "Project",
+        "Projekts"
+      ],
+      path: [
+        "Path",
+        "Ceļš"
+      ],
+      ip: [
+        "IP",
+        "IP"
+      ],
+      method: [
+        "Method",
+        "Metode"
+      ],
+      status: [
+        "Status",
+        "Statuss"
+      ],
+      type: [
+        "Type",
+        "Tips"
+      ],
+      layer: [
+        "Layer",
+        "Slānis"
+      ],
+      agent: [
+        "User-Agent",
+        "User-Agent"
+      ]
+    };
+
+  return labels[kind][
+    lv
+      ? 1
+      : 0
+  ];
+}
+
+function userAgentSuggestion(
+  userAgent: string
+): {
+  value: string;
+  searchValue: string;
+} | null {
+  const lower =
+    userAgent.toLowerCase();
+
+  const candidates:
+    Array<{
+      needle: string;
+      value: string;
+      searchValue: string;
+    }> = [
+      {
+        needle: "googlebot",
+        value: "Googlebot",
+        searchValue: "Googlebot"
+      },
+      {
+        needle: "bingbot",
+        value: "Bingbot",
+        searchValue: "bingbot"
+      },
+      {
+        needle: "firefox/",
+        value: "Firefox",
+        searchValue: "Firefox/"
+      },
+      {
+        needle: "edg/",
+        value: "Edge",
+        searchValue: "Edg/"
+      },
+      {
+        needle: "chrome/",
+        value: "Chrome",
+        searchValue: "Chrome/"
+      },
+      {
+        needle: "safari/",
+        value: "Safari",
+        searchValue: "Safari/"
+      },
+      {
+        needle: "curl/",
+        value: "curl",
+        searchValue: "curl/"
+      },
+      {
+        needle: "wget/",
+        value: "Wget",
+        searchValue: "Wget/"
+      }
+    ];
+
+  for (
+    const candidate
+    of candidates
+  ) {
+    if (
+      lower.includes(
+        candidate.needle
+      )
+    ) {
+      return {
+        value:
+          candidate.value,
+        searchValue:
+          candidate.searchValue
+      };
+    }
+  }
+
+  return null;
+}
+
+function collectLiveSearchSuggestions():
+  LiveSearchSuggestion[] {
+  const query =
+    normalizedLiveSearch(
+      liveSearchQuery
+    );
+
+  const values =
+    new Map<
+      string,
+      LiveSearchSuggestion
+    >();
+
+  const add = (
+    kind:
+      LiveSearchSuggestionKind,
+    value:
+      unknown,
+    searchValue:
+      unknown = value
+  ): void => {
+    const display =
+      String(
+        value ?? ""
+      ).trim();
+
+    const search =
+      String(
+        searchValue ?? ""
+      ).trim();
+
+    if (
+      !display ||
+      !search
+    ) {
+      return;
+    }
+
+    const key =
+      `${kind}:${
+        normalizedLiveSearch(
+          search
+        )
+      }`;
+
+    if (
+      !values.has(
+        key
+      )
+    ) {
+      values.set(
+        key,
+        {
+          kind,
+          value:
+            display,
+          searchValue:
+            search
+        }
+      );
+    }
+  };
+
+  const recentRequests =
+    [...rawRequests.values()]
+      .sort(
+        (
+          left,
+          right
+        ) =>
+          right.sequence -
+          left.sequence
+      )
+      .slice(
+        0,
+        250
+      );
+
+  for (
+    const event
+    of recentRequests
+  ) {
+    add(
+      "project",
+      event.domain
+    );
+
+    add(
+      "path",
+      event.path
+    );
+
+    add(
+      "ip",
+      event.ip
+    );
+
+    add(
+      "method",
+      event.method
+    );
+
+    add(
+      "status",
+      event.status
+    );
+
+    add(
+      "type",
+      event.category
+    );
+
+    const agent =
+      userAgentSuggestion(
+        event.userAgent
+      );
+
+    if (agent) {
+      add(
+        "agent",
+        agent.value,
+        agent.searchValue
+      );
+    }
+  }
+
+  for (
+    const group
+    of smartGroups.values()
+  ) {
+    add(
+      "project",
+      group.domain
+    );
+
+    add(
+      "layer",
+      group.layer
+    );
+  }
+
+  const all =
+    [...values.values()];
+
+  if (!query) {
+    const priority:
+      LiveSearchSuggestionKind[] = [
+        "project",
+        "path",
+        "ip",
+        "agent",
+        "status",
+        "method",
+        "type",
+        "layer"
+      ];
+
+    const examples:
+      LiveSearchSuggestion[] = [];
+
+    for (
+      const kind
+      of priority
+    ) {
+      const example =
+        all.find(
+          item =>
+            item.kind ===
+            kind
+        );
+
+      if (example) {
+        examples.push(
+          example
+        );
+      }
+
+      if (
+        examples.length >=
+        7
+      ) {
+        break;
+      }
+    }
+
+    return examples;
+  }
+
+  const matching =
+    all.filter(
+      item => {
+        const kind =
+          normalizedLiveSearch(
+            searchSuggestionKindLabel(
+              item.kind
+            )
+          );
+
+        const value =
+          normalizedLiveSearch(
+            item.value
+          );
+
+        const search =
+          normalizedLiveSearch(
+            item.searchValue
+          );
+
+        return (
+          kind.includes(
+            query
+          ) ||
+          value.includes(
+            query
+          ) ||
+          search.includes(
+            query
+          )
+        );
+      }
+    );
+
+  const score = (
+    item:
+      LiveSearchSuggestion
+  ): number => {
+    const value =
+      normalizedLiveSearch(
+        item.value
+      );
+
+    const search =
+      normalizedLiveSearch(
+        item.searchValue
+      );
+
+    const kind =
+      normalizedLiveSearch(
+        searchSuggestionKindLabel(
+          item.kind
+        )
+      );
+
+    if (
+      value === query ||
+      search === query
+    ) {
+      return 0;
+    }
+
+    if (
+      value.startsWith(
+        query
+      ) ||
+      search.startsWith(
+        query
+      )
+    ) {
+      return 1;
+    }
+
+    if (
+      kind.startsWith(
+        query
+      )
+    ) {
+      return 2;
+    }
+
+    return 3;
+  };
+
+  return matching
+    .sort(
+      (
+        left,
+        right
+      ) => {
+        const difference =
+          score(
+            left
+          ) -
+          score(
+            right
+          );
+
+        if (
+          difference !== 0
+        ) {
+          return difference;
+        }
+
+        return left.value
+          .localeCompare(
+            right.value
+          );
+      }
+    )
+    .slice(
+      0,
+      8
+    );
+}
+
+function ensureLiveSearchSuggestions(
+  search:
+    HTMLInputElement
+): HTMLDivElement {
+  const toolbar =
+    search.closest<HTMLElement>(
+      ".toolbar"
+    );
+
+  const searchShell =
+    search.closest<HTMLElement>(
+      ".search"
+    );
+
+  if (
+    !toolbar ||
+    !searchShell
+  ) {
+    throw new Error(
+      "Search suggestion container cannot be positioned."
+    );
+  }
+
+  let box =
+    toolbar.querySelector<
+      HTMLDivElement
+    >(
+      ".live-search-suggestions"
+    );
+
+  if (!box) {
+    box =
+      document.createElement(
+        "div"
+      );
+
+    box.className =
+      "live-search-suggestions";
+
+    box.hidden =
+      true;
+
+    box.setAttribute(
+      "role",
+      "listbox"
+    );
+
+    toolbar.append(
+      box
+    );
+  }
+
+  box.style.left =
+    `${searchShell.offsetLeft}px`;
+
+  box.style.width =
+    `${searchShell.offsetWidth}px`;
+
+  return box;
+}
+
+function closeLiveSearchSuggestions():
+  void {
+  const box =
+    document.querySelector<
+      HTMLDivElement
+    >(
+      ".live-search-suggestions"
+    );
+
+  if (box) {
+    box.hidden =
+      true;
+
+    box.replaceChildren();
+  }
+
+  liveSearchSuggestionIndex =
+    -1;
+}
+
+function applyLiveSearchSuggestion(
+  search:
+    HTMLInputElement,
+  suggestion:
+    LiveSearchSuggestion
+): void {
+  search.value =
+    suggestion.searchValue;
+
+  liveSearchQuery =
+    suggestion.searchValue;
+
+  selectedTimelineSecond =
+    null;
+
+  closeLiveSearchSuggestions();
+
+  renderCurrentView();
+
+  search.focus();
+}
+
+function renderLiveSearchSuggestions(
+  search:
+    HTMLInputElement
+): void {
+  const box =
+    ensureLiveSearchSuggestions(
+      search
+    );
+
+  if (
+    document.activeElement !==
+      search
+  ) {
+    closeLiveSearchSuggestions();
+    return;
+  }
+
+  const suggestions =
+    collectLiveSearchSuggestions();
+
+  box.replaceChildren();
+
+  const hint =
+    document.createElement(
+      "div"
+    );
+
+  hint.className =
+    "live-search-suggestions-hint";
+
+  hint.textContent =
+    liveSearchQuery.trim()
+      ? (
+          isLatvianUi()
+            ? "Ieteikumi no pašreizējās sesijas"
+            : "Suggestions from the current session"
+        )
+      : (
+          isLatvianUi()
+            ? "Var meklēt projektu, ceļu, IP, User-Agent, statusu vai metodi"
+            : "Search project, path, IP, User-Agent, status or method"
+        );
+
+  box.append(
+    hint
+  );
+
+  if (
+    suggestions.length ===
+    0
+  ) {
+    const empty =
+      document.createElement(
+        "div"
+      );
+
+    empty.className =
+      "live-search-suggestions-empty";
+
+    empty.textContent =
+      isLatvianUi()
+        ? "Dzīvs ieteikums nav atrasts — meklēšana joprojām pārbaudīs visus laukus."
+        : "No live suggestion found — search will still scan all fields.";
+
+    box.append(
+      empty
+    );
+
+    box.hidden =
+      false;
+
+    return;
+  }
+
+  suggestions.forEach(
+    (
+      suggestion,
+      index
+    ) => {
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.type =
+        "button";
+
+      button.className =
+        "live-search-suggestion";
+
+      button.setAttribute(
+        "role",
+        "option"
+      );
+
+      button.setAttribute(
+        "aria-selected",
+        String(
+          index ===
+            liveSearchSuggestionIndex
+        )
+      );
+
+      if (
+        index ===
+        liveSearchSuggestionIndex
+      ) {
+        button.classList.add(
+          "is-selected"
+        );
+      }
+
+      const kind =
+        document.createElement(
+          "span"
+        );
+
+      kind.className =
+        "live-search-suggestion-kind";
+
+      kind.textContent =
+        searchSuggestionKindLabel(
+          suggestion.kind
+        );
+
+      const value =
+        document.createElement(
+          "span"
+        );
+
+      value.className =
+        "live-search-suggestion-value";
+
+      value.textContent =
+        suggestion.value;
+
+      value.title =
+        suggestion.searchValue;
+
+      button.append(
+        kind,
+        value
+      );
+
+      button.addEventListener(
+        "mousedown",
+        event => {
+          event.preventDefault();
+        }
+      );
+
+      button.addEventListener(
+        "click",
+        () => {
+          applyLiveSearchSuggestion(
+            search,
+            suggestion
+          );
+        }
+      );
+
+      box.append(
+        button
+      );
+    }
+  );
+
+  box.hidden =
+    false;
+}
+
+function moveLiveSearchSuggestion(
+  search:
+    HTMLInputElement,
+  direction:
+    number
+): void {
+  const suggestions =
+    collectLiveSearchSuggestions();
+
+  if (
+    suggestions.length ===
+    0
+  ) {
+    return;
+  }
+
+  liveSearchSuggestionIndex =
+    (
+      liveSearchSuggestionIndex +
+      direction +
+      suggestions.length
+    ) %
+    suggestions.length;
+
+  renderLiveSearchSuggestions(
+    search
+  );
+}
+function setupSearchAndPauseControls():
+  void {
+  const search =
+    document.querySelector<
+      HTMLInputElement
+    >(
+      ".search input"
+    );
+
+  const pause =
+    document.querySelector<
+      HTMLButtonElement
+    >(
+      ".pause-button"
+    );
+
+  if (
+    !search ||
+    !pause
+  ) {
+    throw new Error(
+      "Live Search/Pause controls are missing."
+    );
+  }
+
+  search.disabled =
+    false;
+
+  search.removeAttribute(
+    "aria-disabled"
+  );
+
+  search.autocomplete =
+    "off";
+
+  search.spellcheck =
+    false;
+
+  search.setAttribute(
+    "aria-autocomplete",
+    "list"
+  );
+
+  search.setAttribute(
+    "aria-haspopup",
+    "listbox"
+  );
+
+  pause.disabled =
+    false;
+
+  pause.removeAttribute(
+    "aria-disabled"
+  );
+
+  search.addEventListener(
+    "focus",
+    () => {
+      liveSearchSuggestionIndex =
+        -1;
+
+      renderLiveSearchSuggestions(
+        search
+      );
+    }
+  );
+
+  search.addEventListener(
+    "input",
+    () => {
+      liveSearchQuery =
+        search.value;
+
+      liveSearchSuggestionIndex =
+        -1;
+
+      selectedTimelineSecond =
+        null;
+
+      renderCurrentView();
+
+      renderLiveSearchSuggestions(
+        search
+      );
+    }
+  );
+
+  search.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key ===
+        "ArrowDown"
+      ) {
+        event.preventDefault();
+
+        moveLiveSearchSuggestion(
+          search,
+          1
+        );
+
+        return;
+      }
+
+      if (
+        event.key ===
+        "ArrowUp"
+      ) {
+        event.preventDefault();
+
+        moveLiveSearchSuggestion(
+          search,
+          -1
+        );
+
+        return;
+      }
+
+      if (
+        event.key ===
+          "Enter" &&
+        liveSearchSuggestionIndex >=
+          0
+      ) {
+        const suggestions =
+          collectLiveSearchSuggestions();
+
+        const selected =
+          suggestions[
+            liveSearchSuggestionIndex
+          ];
+
+        if (selected) {
+          event.preventDefault();
+
+          applyLiveSearchSuggestion(
+            search,
+            selected
+          );
+        }
+
+        return;
+      }
+
+      if (
+        event.key ===
+        "Escape"
+      ) {
+        closeLiveSearchSuggestions();
+
+        search.blur();
+      }
+    }
+  );
+
+  search.addEventListener(
+    "blur",
+    () => {
+      window.setTimeout(
+        closeLiveSearchSuggestions,
+        120
+      );
+    }
+  );
+
+  pause.addEventListener(
+    "click",
+    () => {
+      liveUiPaused =
+        !liveUiPaused;
+
+      updatePauseButton();
+
+      if (!liveUiPaused) {
+        renderCurrentView();
+      }
+    }
+  );
+
+  window.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key !== "/" ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      const target =
+        event.target;
+
+      if (
+        target instanceof
+          HTMLInputElement ||
+        target instanceof
+          HTMLTextAreaElement ||
+        target instanceof
+          HTMLSelectElement
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+
+      search.focus();
+      search.select();
+
+      renderLiveSearchSuggestions(
+        search
+      );
+    }
+  );
+
+  window.addEventListener(
+    "resize",
+    () => {
+      if (
+        document.activeElement ===
+          search
+      ) {
+        renderLiveSearchSuggestions(
+          search
+        );
+      }
+    }
+  );
+
+  updatePauseButton();
+}
 function renderRawView():
   void {
   const text =
@@ -2486,6 +3649,9 @@ function renderRawView():
         event =>
           isMonitoredProject(
             event.domain
+          ) &&
+          rawRequestMatchesSearch(
+            event
           ) &&
           requestTouchesSelectedSecond(
             event
@@ -3113,6 +4279,9 @@ function renderSmartView():
         isMonitoredProject(
           group.domain
         ) &&
+        smartGroupMatchesSearch(
+          group
+        ) &&
         activeLayers.has(
           group.layer
         ) &&
@@ -3161,6 +4330,7 @@ function renderSmartView():
 
 function renderCurrentView():
   void {
+  updatePauseButton();
   updatePresentation();
   renderActivityTimeline();
 
@@ -3175,6 +4345,9 @@ function renderCurrentView():
 
 function scheduleRender():
   void {
+  if (liveUiPaused) {
+    return;
+  }
   if (renderScheduled) {
     return;
   }
@@ -3342,6 +4515,7 @@ export async function setupLiveBridge():
 
   createActivityTimeline();
   createViewControls();
+  setupSearchAndPauseControls();
   watchLanguage();
   startActivityClock();
 
