@@ -11,12 +11,12 @@
 
 ## Phase 1 — Multi-project collector
 
-- discover available `*-ssl_log` files
-- monitor multiple projects
-- reconnect automatically
-- detect log rotation
-- normalize project names
-- calculate observed hosting log delay
+- [x] discover available `*-ssl_log` files
+- [ ] monitor multiple projects
+- [ ] reconnect automatically
+- [ ] detect log rotation
+- [ ] normalize project names
+- [ ] calculate observed hosting log delay
 
 ## Phase 2 — Desktop application
 
