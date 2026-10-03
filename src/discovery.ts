@@ -1,5 +1,7 @@
 import type { Client } from "ssh2";
 
+import { normalizeProjectName } from "./project-name.js";
+
 export interface DiscoveredLog {
   domain: string;
   fileName: string;
@@ -62,7 +64,7 @@ export async function discoverLogs(
 
         resolve(
           fileNames.map((fileName) => ({
-            domain: fileName.replace(/-ssl_log$/, ""),
+            domain: normalizeProjectName(fileName),
             fileName,
             remotePath: `${remoteLogDir}/${fileName}`
           }))
