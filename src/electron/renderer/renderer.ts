@@ -13,6 +13,10 @@ import {
   setupServerPanel
 } from "./server-panel.js";
 
+import {
+  setupLiveBridge
+} from "./live-bridge.js";
+
 function requireElement<T extends HTMLElement>(
   id: string
 ): T {
@@ -461,6 +465,8 @@ async function boot(): Promise<void> {
       () =>
         preferences.language
     );
+
+    await setupLiveBridge();
 
   void window.qcyLiveLog
     .bootstrapStartup()

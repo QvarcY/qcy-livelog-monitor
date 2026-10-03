@@ -52,6 +52,12 @@ import {
   stopConfiguredLiveCollector
 } from "./live-collector-service.js";
 
+import type {
+  LiveCollectorStatus,
+  LiveRequestEvent,
+  LiveRotationEvent
+} from "./live-collector.js";
+
 import {
   forgetSshPassphrase,
   hasSshPassphrase,
@@ -125,6 +131,61 @@ function applyLaunchAtLogin(
   app.setLoginItemSettings({
     openAtLogin: enabled
   });
+}
+
+const LIVE_REQUEST_BUFFER_LIMIT = 250;
+
+let latestCollectorStatus:
+  LiveCollectorStatus | null = null;
+
+const recentLiveRequests:
+  LiveRequestEvent[] = [];
+
+const latestLogRotations =
+  new Map<string, LiveRotationEvent>();
+
+function broadcastLiveEvent(
+  channel: string,
+  payload: unknown
+): void {
+  for (
+    const window
+    of BrowserWindow.getAllWindows()
+  ) {
+    if (
+      window.isDestroyed() ||
+      window.webContents.isDestroyed()
+    ) {
+      continue;
+    }
+
+    window.webContents.send(
+      channel,
+      payload
+    );
+  }
+}
+
+function recordLiveRequest(
+  event: LiveRequestEvent
+): void {
+  recentLiveRequests.push(event);
+
+  if (
+    recentLiveRequests.length >
+    LIVE_REQUEST_BUFFER_LIMIT
+  ) {
+    recentLiveRequests.splice(
+      0,
+      recentLiveRequests.length -
+        LIVE_REQUEST_BUFFER_LIMIT
+    );
+  }
+
+  broadcastLiveEvent(
+    "live:request",
+    event
+  );
 }
 
 function registerIpc(): void {
@@ -481,6 +542,28 @@ function registerIpc(): void {
       );
     }
   );
+
+  ipcMain.handle(
+    "live:get-snapshot",
+    (
+      event: IpcMainInvokeEvent
+    ) => {
+      assertTrustedSender(event);
+
+      return {
+        status:
+          latestCollectorStatus,
+
+        requests:
+          [...recentLiveRequests],
+
+        rotations:
+          [
+            ...latestLogRotations.values()
+          ]
+      };
+    }
+  );
 }
 
 function createWindow(): BrowserWindow {
@@ -584,6 +667,14 @@ app.whenReady().then(async () => {
     {
       onStatus:
         status => {
+          latestCollectorStatus =
+            status;
+
+          broadcastLiveEvent(
+            "live:status",
+            status
+          );
+
           if (
             !app.isPackaged
           ) {
@@ -612,6 +703,10 @@ app.whenReady().then(async () => {
 
       onRequest:
         event => {
+          recordLiveRequest(
+            event
+          );
+
           if (
             !app.isPackaged
           ) {
@@ -627,6 +722,16 @@ app.whenReady().then(async () => {
 
       onRotation:
         event => {
+          latestLogRotations.set(
+            event.domain,
+            event
+          );
+
+          broadcastLiveEvent(
+            "live:rotation",
+            event
+          );
+
           if (
             !app.isPackaged
           ) {

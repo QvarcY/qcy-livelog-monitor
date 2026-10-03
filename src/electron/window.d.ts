@@ -67,6 +67,71 @@ export interface AppPreferencesPatch {
   launchAtLogin?: boolean;
 }
 
+export type LiveLogCategory =
+  | "GREETING"
+  | "WP_PROBE"
+  | "WP_TRAFFIC"
+  | "SECURITY_PROBE"
+  | "BOT"
+  | "SERVER_ERROR"
+  | "NOT_FOUND"
+  | "VISITOR";
+
+export type LiveCollectorState =
+  | "connecting"
+  | "connected"
+  | "monitoring"
+  | "reconnecting"
+  | "stopped";
+
+export interface LiveCollectorStatus {
+  state: LiveCollectorState;
+  attempt: number;
+  retryInMs?: number;
+  projectCount?: number;
+  message?: string;
+}
+
+export interface LiveRequestEvent {
+  sequence: number;
+  receivedAt: string;
+  domain: string;
+  category: LiveLogCategory;
+  ip: string;
+  timestamp: string;
+  method: string;
+  path: string;
+  protocol: string;
+  status: number;
+  bytes: string;
+  referer: string;
+  userAgent: string;
+  observedDelayMs:
+    number | null;
+}
+
+export interface LiveRotationEvent {
+  domain: string;
+  state:
+    | "unavailable"
+    | "following";
+  remotePath: string;
+}
+
+export interface LiveCollectorSnapshot {
+  status:
+    LiveCollectorStatus | null;
+
+  requests:
+    LiveRequestEvent[];
+
+  rotations:
+    LiveRotationEvent[];
+}
+
+export type LiveEventUnsubscribe =
+  () => void;
+
 export interface QcYLiveLogApi {
   getAppInfo(): Promise<AppInfo>;
 
@@ -128,6 +193,33 @@ export interface QcYLiveLogApi {
     request: LogDiscoveryRequest,
     passphrase?: string
   ): Promise<DiscoveredLog[]>;
+
+  getLiveSnapshot():
+    Promise<LiveCollectorSnapshot>;
+
+  onCollectorStatus(
+    callback:
+      (
+        status:
+          LiveCollectorStatus
+      ) => void
+  ): LiveEventUnsubscribe;
+
+  onLiveRequest(
+    callback:
+      (
+        event:
+          LiveRequestEvent
+      ) => void
+  ): LiveEventUnsubscribe;
+
+  onLogRotation(
+    callback:
+      (
+        event:
+          LiveRotationEvent
+      ) => void
+  ): LiveEventUnsubscribe;
 }
 
 declare global {

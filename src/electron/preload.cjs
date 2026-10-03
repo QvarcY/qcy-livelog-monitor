@@ -3,6 +3,30 @@ const {
   ipcRenderer
 } = require("electron");
 
+function subscribe(
+  channel,
+  callback
+) {
+  const listener = (
+    _event,
+    payload
+  ) => {
+    callback(payload);
+  };
+
+  ipcRenderer.on(
+    channel,
+    listener
+  );
+
+  return () => {
+    ipcRenderer.removeListener(
+      channel,
+      listener
+    );
+  };
+}
+
 const api = Object.freeze({
   getAppInfo: () =>
     ipcRenderer.invoke(
@@ -111,6 +135,35 @@ const api = Object.freeze({
     ipcRenderer.invoke(
       "credentials:has",
       profileId
+    ),
+
+  getLiveSnapshot: () =>
+    ipcRenderer.invoke(
+      "live:get-snapshot"
+    ),
+
+  onCollectorStatus: (
+    callback
+  ) =>
+    subscribe(
+      "live:status",
+      callback
+    ),
+
+  onLiveRequest: (
+    callback
+  ) =>
+    subscribe(
+      "live:request",
+      callback
+    ),
+
+  onLogRotation: (
+    callback
+  ) =>
+    subscribe(
+      "live:rotation",
+      callback
     )
 });
 
