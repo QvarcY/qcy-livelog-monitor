@@ -14,7 +14,7 @@
 - [x] discover available `*-ssl_log` files
 - [x] monitor multiple projects
 - [x] reconnect automatically
-- [ ] detect log rotation
+- [x] detect log rotation
 - [ ] normalize project names
 - [ ] calculate observed hosting log delay
 

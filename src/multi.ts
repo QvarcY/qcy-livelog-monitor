@@ -12,6 +12,7 @@ import {
   type DiscoveredLog
 } from "./discovery.js";
 import { parseAccessLogLine } from "./parser.js";
+import { parseTailControlLine } from "./tail-events.js";
 import {
   classify,
   type LogCategory
@@ -124,7 +125,50 @@ async function monitorLogs(
       }
 
       let buffer = "";
+      let stderrBuffer = "";
       let currentDomain: string | null = null;
+      const unavailablePaths = new Set<string>();
+
+      const handleTailMessage = (
+        rawLine: string
+      ): void => {
+        const line = rawLine.trim();
+
+        if (line === "") {
+          return;
+        }
+
+        const event = parseTailControlLine(line);
+
+        if (!event) {
+          console.error(`[TAIL] ${line}`);
+          return;
+        }
+
+        const domain =
+          domainByPath.get(event.remotePath) ??
+          event.remotePath;
+
+        if (event.type === "LOG_UNAVAILABLE") {
+          unavailablePaths.add(
+            event.remotePath
+          );
+
+          console.log(
+            `[ROTATION] ${domain} — log temporarily unavailable`
+          );
+
+          return;
+        }
+
+        unavailablePaths.delete(
+          event.remotePath
+        );
+
+        console.log(
+          `[ROTATION] ${domain} — following new log file`
+        );
+      };
 
       stream.on("data", (data: Buffer) => {
         buffer += data.toString("utf8");
@@ -166,17 +210,29 @@ async function monitorLogs(
       stream.stderr.on(
         "data",
         (data: Buffer) => {
-          const message = data
-            .toString("utf8")
-            .trim();
+          stderrBuffer += data.toString("utf8");
 
-          if (message !== "") {
-            console.error(`[TAIL] ${message}`);
+          const lines =
+            stderrBuffer.split(/\r?\n/);
+
+          stderrBuffer =
+            lines.pop() ?? "";
+
+          for (const line of lines) {
+            handleTailMessage(line);
           }
         }
       );
 
       stream.on("close", () => {
+        if (stderrBuffer.trim() !== "") {
+          handleTailMessage(
+            stderrBuffer
+          );
+
+          stderrBuffer = "";
+        }
+
         resolve();
       });
     });
