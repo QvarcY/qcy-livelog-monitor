@@ -17,6 +17,11 @@ import {
   type SshConnectionProfileInput
 } from "../server-profile.js";
 
+import {
+  createSshHostKeyGuard,
+  hostKeyMismatchError
+} from "./ssh-host-key.js";
+
 export interface LogDiscoveryRequest {
   ssh: SshConnectionProfileInput;
 
@@ -107,6 +112,12 @@ export async function discoverRemoteLogs(
     );
   }
 
+  if (!ssh.hostKeySha256) {
+    throw new Error(
+      "Trusted SSH host key is required before log discovery."
+    );
+  }
+
   let privateKey: Buffer;
 
   try {
@@ -120,11 +131,18 @@ export async function discoverRemoteLogs(
     );
   }
 
+  const hostKey =
+    createSshHostKeyGuard(
+      ssh.hostKeySha256
+    );
+
   const config: ConnectConfig = {
     host: ssh.host,
     port: ssh.port,
     username: ssh.username,
     privateKey,
+    hostVerifier:
+      hostKey.verifier,
     readyTimeout: 15000,
     keepaliveInterval: 10000,
     keepaliveCountMax: 3
@@ -157,6 +175,19 @@ export async function discoverRemoteLogs(
 
         settled = true;
         client.end();
+
+        const mismatch =
+          hostKey.getMismatch();
+
+        if (mismatch) {
+          reject(
+            hostKeyMismatchError(
+              mismatch
+            )
+          );
+
+          return;
+        }
 
         reject(
           error instanceof Error

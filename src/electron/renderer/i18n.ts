@@ -107,6 +107,21 @@ const en = {
   connectionSuccess: "SSH connection successful:",
   connectionFailed: "SSH connection failed",
 
+  hostKeyFingerprint: "Server host key",
+  hostKeyHelp:
+    "Pinned after the first trusted connection and checked on every future connection.",
+  trustHostKeyPrompt:
+    "This server key has not been trusted yet. Verify the fingerprint with your hosting provider if possible. Trust this key?",
+  verifyingTrustedHostKey:
+    "Verifying the trusted server key…",
+  hostKeyTrusted:
+    "Server key trusted and pinned.",
+  hostKeyRejected:
+    "Server key was not trusted.",
+  forgetHostKey: "Forget key",
+  forgetHostKeyConfirm:
+    "Forget the trusted server key? The next connection will ask you to trust a new fingerprint.",
+
   discoverLogs: "Discover logs",
   discoveringLogs: "Discovering log files…",
   discoveredLogs: "Discovered logs",
@@ -239,6 +254,21 @@ const lv: Record<
   testingConnection: "Pārbauda SSH savienojumu…",
   connectionSuccess: "SSH savienojums veiksmīgs:",
   connectionFailed: "SSH savienojums neizdevās",
+
+  hostKeyFingerprint: "Servera host atslēga",
+  hostKeyHelp:
+    "Pēc pirmās uzticēšanas to piesaista profilam un pārbauda katrā nākamajā savienojumā.",
+  trustHostKeyPrompt:
+    "Šī servera atslēga vēl nav uzticēta. Ja iespējams, salīdzini fingerprintu ar hostinga sniedzēja datiem. Uzticēties šai atslēgai?",
+  verifyingTrustedHostKey:
+    "Pārbauda uzticēto servera atslēgu…",
+  hostKeyTrusted:
+    "Servera atslēga uzticēta un piesaistīta profilam.",
+  hostKeyRejected:
+    "Servera atslēgai netika uzticēts.",
+  forgetHostKey: "Aizmirst atslēgu",
+  forgetHostKeyConfirm:
+    "Aizmirst uzticēto servera atslēgu? Nākamajā savienojumā būs jāapstiprina jauns fingerprints.",
 
   discoverLogs: "Atklāt logus",
   discoveringLogs: "Meklē logu failus…",

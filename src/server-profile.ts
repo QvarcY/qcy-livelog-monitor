@@ -7,6 +7,7 @@ export interface SshConnectionProfile {
   port: number;
   username: string;
   privateKeyPath: string;
+  hostKeySha256?: string;
 }
 
 export interface SshConnectionProfileInput {
@@ -14,6 +15,7 @@ export interface SshConnectionProfileInput {
   port?: unknown;
   username?: unknown;
   privateKeyPath?: unknown;
+  hostKeySha256?: unknown;
 }
 
 export interface LogSourceProfile {
@@ -124,6 +126,35 @@ function normalizeId(
   return id;
 }
 
+function normalizeHostKeySha256(
+  value: unknown
+): string | undefined {
+  if (
+    value === undefined ||
+    value === null ||
+    value === ""
+  ) {
+    return undefined;
+  }
+
+  const fingerprint =
+    requireString(
+      value,
+      "SSH host key fingerprint"
+    );
+
+  if (
+    !/^SHA256:[A-Za-z0-9+/]+$/u.test(
+      fingerprint
+    )
+  ) {
+    throw new Error(
+      "SSH host key fingerprint must use SHA256 format."
+    );
+  }
+
+  return fingerprint;
+}
 export function normalizeSshConnectionProfile(
   input: unknown
 ): SshConnectionProfile {
@@ -158,7 +189,12 @@ export function normalizeSshConnectionProfile(
     privateKeyPath: requireString(
       record.privateKeyPath,
       "Private key path"
-    )
+    ),
+
+    hostKeySha256:
+      normalizeHostKeySha256(
+        record.hostKeySha256
+      )
   };
 }
 

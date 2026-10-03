@@ -691,6 +691,34 @@
                 Used only for this session and never saved.
               </small>
             </label>
+
+            <label class="server-field">
+              <span data-i18n="hostKeyFingerprint">
+                Server host key
+              </span>
+
+              <div class="server-input-action">
+                <input
+                  id="server-host-key"
+                  type="text"
+                  readonly
+                  autocomplete="off"
+                  placeholder="SHA256:..."
+                >
+
+                <button
+                  id="server-host-key-reset"
+                  type="button"
+                  data-i18n="forgetHostKey"
+                >
+                  Forget key
+                </button>
+              </div>
+
+              <small data-i18n="hostKeyHelp">
+                Pinned after the first trusted connection and checked on every future connection.
+              </small>
+            </label>
           </section>
 
           <section class="server-form-section">

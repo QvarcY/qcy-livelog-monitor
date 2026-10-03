@@ -12,10 +12,17 @@ import {
   type SshConnectionProfile
 } from "../server-profile.js";
 
+import {
+  createSshHostKeyGuard,
+  hostKeyMismatchError
+} from "./ssh-host-key.js";
+
 export interface SshConnectionTestResult {
   ok: true;
   target: string;
   latencyMs: number;
+  hostKeySha256: string;
+  hostKeyTrusted: boolean;
 }
 
 function targetLabel(
@@ -50,20 +57,28 @@ export async function testSshConnection(
   let privateKey: Buffer;
 
   try {
-    privateKey = await readFile(
-      ssh.privateKeyPath
-    );
+    privateKey =
+      await readFile(
+        ssh.privateKeyPath
+      );
   } catch {
     throw new Error(
       `Cannot read private key: ${ssh.privateKeyPath}`
     );
   }
 
+  const hostKey =
+    createSshHostKeyGuard(
+      ssh.hostKeySha256
+    );
+
   const config: ConnectConfig = {
     host: ssh.host,
     port: ssh.port,
     username: ssh.username,
     privateKey,
+    hostVerifier:
+      hostKey.verifier,
     readyTimeout: 15000,
     keepaliveInterval: 10000,
     keepaliveCountMax: 3
@@ -98,8 +113,20 @@ export async function testSshConnection(
         }
 
         settled = true;
-
         client.end();
+
+        const mismatch =
+          hostKey.getMismatch();
+
+        if (mismatch) {
+          reject(
+            hostKeyMismatchError(
+              mismatch
+            )
+          );
+
+          return;
+        }
 
         reject(
           error instanceof Error
@@ -185,18 +212,41 @@ export async function testSshConnection(
                     return;
                   }
 
+                  const fingerprint =
+                    hostKey.getObserved();
+
+                  if (!fingerprint) {
+                    fail(
+                      new Error(
+                        "SSH server host key was not observed."
+                      )
+                    );
+
+                    return;
+                  }
+
                   settled = true;
 
-                  const result: SshConnectionTestResult = {
-                    ok: true,
-                    target:
-                      targetLabel(
-                        ssh
-                      ),
-                    latencyMs:
-                      Date.now() -
-                      startedAt
-                  };
+                  const result:
+                    SshConnectionTestResult = {
+                      ok: true,
+
+                      target:
+                        targetLabel(
+                          ssh
+                        ),
+
+                      latencyMs:
+                        Date.now() -
+                        startedAt,
+
+                      hostKeySha256:
+                        fingerprint,
+
+                      hostKeyTrusted:
+                        ssh.hostKeySha256 ===
+                        fingerprint
+                    };
 
                   client.end();
                   resolve(result);

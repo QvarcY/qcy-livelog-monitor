@@ -1961,3 +1961,10 @@ body.is-focus-mode .events {
     grid-column: auto;
   }
 }
+/* ssh host key */
+
+.server-field input[readonly] {
+  cursor: default;
+  color: var(--text-secondary);
+  background: var(--panel-raised);
+}

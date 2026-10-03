@@ -53,6 +53,9 @@ function sshSignature(): string {
     privateKeyPath:
       readInput("server-key"),
 
+    hostKeySha256:
+      readInput("server-host-key"),
+
     passphrase:
       requireElement<HTMLInputElement>(
         "server-passphrase"
@@ -151,6 +154,16 @@ export async function setupServerPanel(
   const passphraseInput =
     requireElement<HTMLInputElement>(
       "server-passphrase"
+    );
+
+  const hostKeyInput =
+    requireElement<HTMLInputElement>(
+      "server-host-key"
+    );
+
+  const forgetHostKeyButton =
+    requireElement<HTMLButtonElement>(
+      "server-host-key-reset"
     );
 
   const portInput =
@@ -314,6 +327,7 @@ export async function setupServerPanel(
 
     portInput.value = "22";
     parser.value = "auto";
+    hostKeyInput.value = "";
 
     verifiedSignature = null;
 
@@ -364,6 +378,10 @@ export async function setupServerPanel(
       "server-key"
     ).value =
       profile.ssh.privateKeyPath;
+
+    hostKeyInput.value =
+      profile.ssh.hostKeySha256 ??
+      "";
 
     requireElement<HTMLInputElement>(
       "server-passphrase"
@@ -723,6 +741,48 @@ export async function setupServerPanel(
     );
   }
 
+  for (
+    const id of [
+      "server-host",
+      "server-port"
+    ]
+  ) {
+    requireElement<HTMLInputElement>(
+      id
+    ).addEventListener(
+      "input",
+      () => {
+        hostKeyInput.value = "";
+        invalidateVerification();
+      }
+    );
+  }
+
+  forgetHostKeyButton.addEventListener(
+    "click",
+    () => {
+      if (hostKeyInput.value === "") {
+        return;
+      }
+
+      const language =
+        getLanguage();
+
+      if (
+        !window.confirm(
+          translate(
+            language,
+            "forgetHostKeyConfirm"
+          )
+        )
+      ) {
+        return;
+      }
+
+      hostKeyInput.value = "";
+      invalidateVerification();
+    }
+  );
   testButton.addEventListener(
     "click",
     async () => {
@@ -743,34 +803,101 @@ export async function setupServerPanel(
         "working"
       );
 
+      const connectionInput = (
+        hostKeySha256?: string
+      ) => ({
+        host:
+          readInput(
+            "server-host"
+          ),
+
+        port:
+          readInput(
+            "server-port"
+          ),
+
+        username:
+          readInput(
+            "server-username"
+          ),
+
+        privateKeyPath:
+          readInput(
+            "server-key"
+          ),
+
+        hostKeySha256
+      });
+
       try {
-        const result =
+        const existingHostKey =
+          readInput(
+            "server-host-key"
+          );
+
+        let result =
           await window.qcyLiveLog
             .testSshConnection(
-              {
-                host:
-                  readInput(
-                    "server-host"
-                  ),
-
-                port:
-                  readInput(
-                    "server-port"
-                  ),
-
-                username:
-                  readInput(
-                    "server-username"
-                  ),
-
-                privateKeyPath:
-                  readInput(
-                    "server-key"
-                  )
-              },
-
+              connectionInput(
+                existingHostKey ||
+                undefined
+              ),
               passphraseInput.value
             );
+
+        if (!result.hostKeyTrusted) {
+          const accepted =
+            window.confirm(
+              `${translate(
+                language,
+                "trustHostKeyPrompt"
+              )}\n\n${result.hostKeySha256}`
+            );
+
+          if (!accepted) {
+            hostKeyInput.value = "";
+            verifiedSignature = null;
+
+            setStatus(
+              translate(
+                language,
+                "hostKeyRejected"
+              ),
+              "error"
+            );
+
+            return;
+          }
+
+          hostKeyInput.value =
+            result.hostKeySha256;
+
+          setStatus(
+            translate(
+              language,
+              "verifyingTrustedHostKey"
+            ),
+            "working"
+          );
+
+          result =
+            await window.qcyLiveLog
+              .testSshConnection(
+                connectionInput(
+                  result.hostKeySha256
+                ),
+                passphraseInput.value
+              );
+        }
+
+        if (!result.hostKeyTrusted) {
+          throw new Error(
+            "SSH host key could not be verified."
+          );
+        }
+
+        hostKeyInput.value =
+          result.hostKeySha256;
 
         verifiedSignature =
           sshSignature();
@@ -785,7 +912,7 @@ export async function setupServerPanel(
           `${translate(
             language,
             "connectionSuccess"
-          )} ${result.target} · ${result.latencyMs} ms`,
+          )} ${result.target} · ${result.latencyMs} ms · ${result.hostKeySha256}`,
           "success"
         );
       } catch (error: unknown) {
@@ -793,6 +920,9 @@ export async function setupServerPanel(
           null;
 
         saveButton.disabled =
+          true;
+
+        discoverButton.disabled =
           true;
 
         const message =
@@ -813,7 +943,6 @@ export async function setupServerPanel(
       }
     }
   );
-
   discoverButton.addEventListener(
     "click",
     async () => {
@@ -879,6 +1008,11 @@ export async function setupServerPanel(
                   privateKeyPath:
                     readInput(
                       "server-key"
+                    ),
+
+                  hostKeySha256:
+                    readInput(
+                      "server-host-key"
                     )
                 },
 
@@ -1000,6 +1134,11 @@ export async function setupServerPanel(
             privateKeyPath:
               readInput(
                 "server-key"
+              ),
+
+            hostKeySha256:
+              readInput(
+                "server-host-key"
               )
           },
 
