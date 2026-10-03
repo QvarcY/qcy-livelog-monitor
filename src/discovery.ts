@@ -21,12 +21,15 @@ function shellQuote(value: string): string {
 
 export async function discoverLogs(
   client: Client,
-  remoteLogDir = getRemoteLogDir()
+  remoteLogDir = getRemoteLogDir(),
+  pattern = "*-ssl_log",
+  projectNameSuffix = "-ssl_log"
 ): Promise<DiscoveredLog[]> {
   return await new Promise<DiscoveredLog[]>((resolve, reject) => {
     const command =
       `find ${shellQuote(remoteLogDir)} ` +
-      "-maxdepth 1 -type f -name '*-ssl_log' " +
+      "-maxdepth 1 -type f " +
+      `-name ${shellQuote(pattern)} ` +
       "-printf '%f\\n' | sort";
 
     client.exec(command, (error, stream) => {
@@ -64,7 +67,10 @@ export async function discoverLogs(
 
         resolve(
           fileNames.map((fileName) => ({
-            domain: normalizeProjectName(fileName),
+            domain: normalizeProjectName(
+              fileName,
+              projectNameSuffix
+            ),
             fileName,
             remotePath: `${remoteLogDir}/${fileName}`
           }))

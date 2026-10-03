@@ -107,6 +107,15 @@ const en = {
   connectionSuccess: "SSH connection successful:",
   connectionFailed: "SSH connection failed",
 
+  discoverLogs: "Discover logs",
+  discoveringLogs: "Discovering log files…",
+  discoveredLogs: "Discovered logs",
+  logsFound: "log files found",
+  noLogsFound: "No matching log files were found.",
+  discoverFailed: "Log discovery failed",
+  testBeforeDiscover:
+    "Test the SSH connection before discovering logs.",
+
   saveServer: "Save server",
   savingServer: "Saving server…",
   serverSaved: "Server profile saved.",
@@ -230,6 +239,15 @@ const lv: Record<
   testingConnection: "Pārbauda SSH savienojumu…",
   connectionSuccess: "SSH savienojums veiksmīgs:",
   connectionFailed: "SSH savienojums neizdevās",
+
+  discoverLogs: "Atklāt logus",
+  discoveringLogs: "Meklē logu failus…",
+  discoveredLogs: "Atrasti logi",
+  logsFound: "logu faili atrasti",
+  noLogsFound: "Neviens atbilstošs logu fails netika atrasts.",
+  discoverFailed: "Logu atklāšana neizdevās",
+  testBeforeDiscover:
+    "Pirms logu atklāšanas pārbaudi SSH savienojumu.",
 
   saveServer: "Saglabāt serveri",
   savingServer: "Saglabā serveri…",

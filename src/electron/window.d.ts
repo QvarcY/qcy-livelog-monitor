@@ -8,6 +8,14 @@ import type {
   SshConnectionTestResult
 } from "./ssh-test.js";
 
+import type {
+  LogDiscoveryRequest
+} from "./log-discovery.js";
+
+import type {
+  DiscoveredLog
+} from "../discovery.js";
+
 export interface AppInfo {
   name: string;
   author: string;
@@ -79,6 +87,11 @@ export interface QcYLiveLogApi {
     ssh: SshConnectionProfileInput,
     passphrase?: string
   ): Promise<SshConnectionTestResult>;
+
+  discoverLogs(
+    request: LogDiscoveryRequest,
+    passphrase?: string
+  ): Promise<DiscoveredLog[]>;
 }
 
 declare global {

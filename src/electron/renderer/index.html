@@ -776,15 +776,46 @@
             data-state="idle"
           ></div>
 
+          <section
+            id="server-discovery-results"
+            class="server-discovery-results"
+            hidden
+          >
+            <div class="server-discovery-heading">
+              <strong data-i18n="discoveredLogs">
+                Discovered logs
+              </strong>
+
+              <span id="server-discovery-count"></span>
+            </div>
+
+            <div
+              id="server-discovery-list"
+              class="server-discovery-list"
+            ></div>
+          </section>
+
           <footer class="server-form-actions">
-            <button
-              id="server-test"
-              class="server-secondary-action"
-              type="button"
-              data-i18n="testConnection"
-            >
-              Test connection
-            </button>
+            <div class="server-discovery-actions">
+              <button
+                id="server-test"
+                class="server-secondary-action"
+                type="button"
+                data-i18n="testConnection"
+              >
+                Test connection
+              </button>
+
+              <button
+                id="server-discover"
+                class="server-secondary-action"
+                type="button"
+                disabled
+                data-i18n="discoverLogs"
+              >
+                Discover logs
+              </button>
+            </div>
 
             <div>
               <button

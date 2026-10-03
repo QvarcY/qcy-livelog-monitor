@@ -8,6 +8,10 @@ import type {
   ServerProfileInput
 } from "../../server-profile.js";
 
+import type {
+  DiscoveredLog
+} from "../../discovery.js";
+
 export interface ServerPanelController {
   refreshLanguage(): Promise<void>;
 }
@@ -99,6 +103,26 @@ export async function setupServerPanel(
       "server-test"
     );
 
+  const discoverButton =
+    requireElement<HTMLButtonElement>(
+      "server-discover"
+    );
+
+  const discoveryResults =
+    requireElement<HTMLElement>(
+      "server-discovery-results"
+    );
+
+  const discoveryCount =
+    requireElement<HTMLElement>(
+      "server-discovery-count"
+    );
+
+  const discoveryList =
+    requireElement<HTMLElement>(
+      "server-discovery-list"
+    );
+
   const saveButton =
     requireElement<HTMLButtonElement>(
       "server-save"
@@ -146,6 +170,93 @@ export async function setupServerPanel(
   let verifiedSignature: string | null =
     null;
 
+  let discoveredLogs:
+    DiscoveredLog[] = [];
+
+  function clearDiscovery(): void {
+    discoveredLogs = [];
+
+    discoveryResults.hidden =
+      true;
+
+    discoveryCount.textContent =
+      "";
+
+    discoveryList.replaceChildren();
+  }
+
+  function renderDiscovery(): void {
+    const language =
+      getLanguage();
+
+    discoveryList.replaceChildren();
+
+    discoveryResults.hidden =
+      false;
+
+    discoveryCount.textContent =
+      `${discoveredLogs.length} ${translate(
+        language,
+        "logsFound"
+      )}`;
+
+    if (discoveredLogs.length === 0) {
+      const empty =
+        document.createElement("div");
+
+      empty.className =
+        "server-discovery-empty";
+
+      empty.textContent =
+        translate(
+          language,
+          "noLogsFound"
+        );
+
+      discoveryList.append(
+        empty
+      );
+
+      return;
+    }
+
+    for (const log of discoveredLogs) {
+      const row =
+        document.createElement("div");
+
+      row.className =
+        "server-discovery-row";
+
+      const project =
+        document.createElement("strong");
+
+      project.textContent =
+        log.domain;
+
+      const file =
+        document.createElement("span");
+
+      file.textContent =
+        log.fileName;
+
+      const remotePath =
+        document.createElement("small");
+
+      remotePath.textContent =
+        log.remotePath;
+
+      row.append(
+        project,
+        file,
+        remotePath
+      );
+
+      discoveryList.append(
+        row
+      );
+    }
+  }
+
   function setStatus(
     message: string,
     kind:
@@ -163,7 +274,11 @@ export async function setupServerPanel(
 
   function invalidateVerification(): void {
     verifiedSignature = null;
+
     saveButton.disabled = true;
+    discoverButton.disabled = true;
+
+    clearDiscovery();
 
     setStatus(
       "",
@@ -201,7 +316,11 @@ export async function setupServerPanel(
     parser.value = "auto";
 
     verifiedSignature = null;
+
     saveButton.disabled = true;
+    discoverButton.disabled = true;
+
+    clearDiscovery();
 
     updateModeLabels();
 
@@ -272,7 +391,11 @@ export async function setupServerPanel(
       profile.logs.projectNameSuffix;
 
     verifiedSignature = null;
+
     saveButton.disabled = true;
+    discoverButton.disabled = true;
+
+    clearDiscovery();
 
     updateModeLabels();
     renderProfiles();
@@ -608,6 +731,9 @@ export async function setupServerPanel(
 
       testButton.disabled = true;
       saveButton.disabled = true;
+      discoverButton.disabled = true;
+
+      clearDiscovery();
 
       setStatus(
         translate(
@@ -652,6 +778,9 @@ export async function setupServerPanel(
         saveButton.disabled =
           false;
 
+        discoverButton.disabled =
+          false;
+
         setStatus(
           `${translate(
             language,
@@ -681,6 +810,129 @@ export async function setupServerPanel(
       } finally {
         testButton.disabled =
           false;
+      }
+    }
+  );
+
+  discoverButton.addEventListener(
+    "click",
+    async () => {
+      const language =
+        getLanguage();
+
+      if (
+        verifiedSignature === null ||
+        verifiedSignature !==
+          sshSignature()
+      ) {
+        discoverButton.disabled =
+          true;
+
+        setStatus(
+          translate(
+            language,
+            "testBeforeDiscover"
+          ),
+          "error"
+        );
+
+        return;
+      }
+
+      discoverButton.disabled =
+        true;
+
+      testButton.disabled =
+        true;
+
+      clearDiscovery();
+
+      setStatus(
+        translate(
+          language,
+          "discoveringLogs"
+        ),
+        "working"
+      );
+
+      try {
+        discoveredLogs =
+          await window.qcyLiveLog
+            .discoverLogs(
+              {
+                ssh: {
+                  host:
+                    readInput(
+                      "server-host"
+                    ),
+
+                  port:
+                    readInput(
+                      "server-port"
+                    ),
+
+                  username:
+                    readInput(
+                      "server-username"
+                    ),
+
+                  privateKeyPath:
+                    readInput(
+                      "server-key"
+                    )
+                },
+
+                logs: {
+                  directory:
+                    readInput(
+                      "server-log-directory"
+                    ),
+
+                  pattern:
+                    readInput(
+                      "server-log-pattern"
+                    ),
+
+                  projectNameSuffix:
+                    readInput(
+                      "server-project-suffix"
+                    )
+                }
+              },
+
+              passphraseInput.value
+            );
+
+        renderDiscovery();
+
+        setStatus(
+          `${discoveredLogs.length} ${translate(
+            language,
+            "logsFound"
+          )}`,
+          "success"
+        );
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : String(error);
+
+        setStatus(
+          `${translate(
+            language,
+            "discoverFailed"
+          )}: ${message}`,
+          "error"
+        );
+      } finally {
+        testButton.disabled =
+          false;
+
+        discoverButton.disabled =
+          verifiedSignature === null ||
+          verifiedSignature !==
+            sshSignature();
       }
     }
   );
@@ -817,6 +1069,10 @@ export async function setupServerPanel(
     async refreshLanguage(): Promise<void> {
       updateModeLabels();
       renderProfiles();
+
+      if (!discoveryResults.hidden) {
+        renderDiscovery();
+      }
     }
   };
 }

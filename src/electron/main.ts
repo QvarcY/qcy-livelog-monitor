@@ -39,6 +39,10 @@ import {
   testSshConnection
 } from "./ssh-test.js";
 
+import {
+  discoverRemoteLogs
+} from "./log-discovery.js";
+
 import type {
   ServerProfileInput
 } from "../server-profile.js";
@@ -317,6 +321,22 @@ function registerIpc(): void {
 
       return testSshConnection(
         ssh,
+        passphrase
+      );
+    }
+  );
+
+  ipcMain.handle(
+    "logs:discover",
+    async (
+      event: IpcMainInvokeEvent,
+      request: unknown,
+      passphrase: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      return discoverRemoteLogs(
+        request,
         passphrase
       );
     }

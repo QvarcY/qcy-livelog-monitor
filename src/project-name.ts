@@ -1,12 +1,30 @@
 export function normalizeProjectName(
-  value: string
+  value: string,
+  suffix = "-ssl_log"
 ): string {
   const fileName = value
     .trim()
     .replace(/^.*[\\/]/, "");
 
-  const projectName = fileName
-    .replace(/-ssl_log$/i, "")
+  let projectName =
+    fileName;
+
+  if (
+    suffix !== "" &&
+    projectName
+      .toLowerCase()
+      .endsWith(
+        suffix.toLowerCase()
+      )
+  ) {
+    projectName =
+      projectName.slice(
+        0,
+        -suffix.length
+      );
+  }
+
+  projectName = projectName
     .replace(/\.$/, "")
     .trim()
     .toLowerCase();

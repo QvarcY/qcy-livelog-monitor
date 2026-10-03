@@ -62,6 +62,16 @@ const api = Object.freeze({
       "ssh:test",
       ssh,
       passphrase
+    ),
+
+  discoverLogs: (
+    request,
+    passphrase
+  ) =>
+    ipcRenderer.invoke(
+      "logs:discover",
+      request,
+      passphrase
     )
 });
 
