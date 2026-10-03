@@ -144,6 +144,11 @@ const MONTH_INDEX:
 const STATIC_ASSET_EXTENSION =
   /\.(?:css|js|mjs|map|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|eot|mp4|webm|mp3|wav)$/iu;
 
+const ROUTED_ASSET_PATH_HINT =
+  /(?:^|\/)(?:_module-assets|assets|static|dist|build|public)(?:\/|$)/iu;
+
+const ROUTED_MEDIA_PATH_HINT =
+  /(?:^|\/)(?:img|images|fonts?|media)(?:\/|$)/iu;
 const BACKGROUND_PATH_HINT =
   /(?:^|\/)(?:api|ajax|graphql|wp-json|module)(?:\/|$)/iu;
 
@@ -506,6 +511,12 @@ export function classifyActivityRequestRole(
   if (
     STATIC_ASSET_EXTENSION.test(
       path
+    ) ||
+    ROUTED_ASSET_PATH_HINT.test(
+      path
+    ) ||
+    ROUTED_MEDIA_PATH_HINT.test(
+      path
     )
   ) {
     return "asset";
@@ -767,6 +778,28 @@ export class ActivityGroupingEngine {
       return true;
     }
 
+    const primaryStatus =
+      existing.primaryRequest
+        ?.status;
+
+    if (
+      primaryStatus !==
+        undefined &&
+      primaryStatus >= 300 &&
+      primaryStatus < 400
+    ) {
+      return false;
+    }
+
+    if (
+      existing.layer ===
+        "bot" ||
+      existing.layer ===
+        "security"
+    ) {
+      return false;
+    }
+
     if (
       role !==
         "document" ||
@@ -815,7 +848,13 @@ export class ActivityGroupingEngine {
 
       if (
         group.primaryRequest ===
-          null
+          null ||
+        (
+          group.primaryRequest.status >=
+            300 &&
+          group.primaryRequest.status <
+            400
+        )
       ) {
         group.primaryRequest = {
           sequence:

@@ -86,6 +86,34 @@ assert.equal(
 
 console.log("PASS request role classification");
 
+assert.equal(
+  classifyActivityRequestRole(
+    event(
+      10,
+      {
+        path:
+          "/_module-assets/feedback/js?v=0.2.1"
+      }
+    )
+  ),
+  "asset"
+);
+
+assert.equal(
+  classifyActivityRequestRole(
+    event(
+      11,
+      {
+        path:
+          "/showcase/media/4"
+      }
+    )
+  ),
+  "asset"
+);
+
+console.log("PASS routed asset classification");
+
 const apache =
   parseActivityTimestampMs(
     "[03/Oct/2026:23:58:49 +0300]",
@@ -504,6 +532,187 @@ console.log("PASS same IP with different UA stays separate");
 }
 
 console.log("PASS raw request memory cap");
+
+{
+  const engine =
+    new ActivityGroupingEngine();
+
+  engine.push(
+    event(
+      100,
+      {
+        receivedAt:
+          "2026-10-03T21:00:00.000Z",
+
+        path:
+          "/gb",
+
+        status:
+          301
+      }
+    )
+  );
+
+  engine.push(
+    event(
+      101,
+      {
+        receivedAt:
+          "2026-10-03T21:00:04.000Z",
+
+        path:
+          "/gb/",
+
+        status:
+          200
+      }
+    )
+  );
+
+  const groups =
+    engine.snapshot();
+
+  assert.equal(
+    groups.length,
+    1
+  );
+
+  assert.equal(
+    groups[0].documentCount,
+    2
+  );
+
+  assert.equal(
+    groups[0].primaryRequest.path,
+    "/gb/"
+  );
+}
+
+console.log("PASS redirect chain stays grouped");
+
+{
+  const engine =
+    new ActivityGroupingEngine();
+
+  engine.push(
+    event(
+      110,
+      {
+        category:
+          "BOT",
+
+        receivedAt:
+          "2026-10-03T21:00:00.000Z",
+
+        path:
+          "/catalog?page=1"
+      }
+    )
+  );
+
+  engine.push(
+    event(
+      111,
+      {
+        category:
+          "BOT",
+
+        receivedAt:
+          "2026-10-03T21:00:04.000Z",
+
+        path:
+          "/catalog?page=2"
+      }
+    )
+  );
+
+  engine.push(
+    event(
+      112,
+      {
+        category:
+          "BOT",
+
+        receivedAt:
+          "2026-10-03T21:00:08.000Z",
+
+        path:
+          "/catalog?page=3"
+      }
+    )
+  );
+
+  const groups =
+    engine.snapshot();
+
+  assert.equal(
+    groups.length,
+    1
+  );
+
+  assert.equal(
+    groups[0].requestCount,
+    3
+  );
+
+  assert.equal(
+    groups[0].layer,
+    "bot"
+  );
+}
+
+console.log("PASS bot navigation burst stays grouped");
+
+{
+  const engine =
+    new ActivityGroupingEngine();
+
+  engine.push(
+    event(
+      120,
+      {
+        receivedAt:
+          "2026-10-03T21:00:00.000Z",
+
+        path:
+          "/dashboard"
+      }
+    )
+  );
+
+  engine.push(
+    event(
+      121,
+      {
+        receivedAt:
+          "2026-10-03T21:00:04.000Z",
+
+        path:
+          "/_module-assets/tools/js?v=0.1.2"
+      }
+    )
+  );
+
+  const groups =
+    engine.snapshot();
+
+  assert.equal(
+    groups.length,
+    1
+  );
+
+  assert.equal(
+    groups[0].documentCount,
+    1
+  );
+
+  assert.equal(
+    groups[0].assetCount,
+    1
+  );
+}
+
+console.log("PASS routed asset does not create navigation group");
 
 console.log("");
 console.log("ALL ACTIVITY GROUPING TESTS PASSED");

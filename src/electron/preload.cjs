@@ -165,6 +165,20 @@ const api = Object.freeze({
       "live:rotation",
       callback
     )
+  ,
+
+  getSmartSnapshot: () =>
+    ipcRenderer.invoke(
+      "smart:get-snapshot"
+    ),
+
+  onSmartGroupUpdate: (
+    callback
+  ) =>
+    subscribe(
+      "smart:group-update",
+      callback
+    )
 });
 
 contextBridge.exposeInMainWorld(

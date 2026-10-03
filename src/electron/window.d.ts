@@ -1,4 +1,8 @@
 import type {
+  ActivityGroup,
+  ActivityGroupUpdate
+} from "../activity-grouping.js";
+import type {
   ServerProfile,
   ServerProfileInput,
   SshConnectionProfileInput
@@ -218,6 +222,16 @@ export interface QcYLiveLogApi {
       (
         event:
           LiveRotationEvent
+      ) => void
+  ): LiveEventUnsubscribe;
+  getSmartSnapshot():
+    Promise<ActivityGroup[]>;
+
+  onSmartGroupUpdate(
+    callback:
+      (
+        update:
+          ActivityGroupUpdate
       ) => void
   ): LiveEventUnsubscribe;
 }

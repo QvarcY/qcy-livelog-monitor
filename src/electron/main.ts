@@ -57,6 +57,11 @@ import type {
   LiveRequestEvent,
   LiveRotationEvent
 } from "./live-collector.js";
+import {
+  getSmartActivitySnapshot,
+  pushSmartActivity,
+  shouldSurfaceSmartActivity
+} from "./smart-activity.js";
 
 import {
   forgetSshPassphrase,
@@ -564,6 +569,21 @@ function registerIpc(): void {
       };
     }
   );
+  ipcMain.handle(
+    "smart:get-snapshot",
+    (
+      event:
+        IpcMainInvokeEvent
+    ) => {
+      assertTrustedSender(
+        event
+      );
+
+      return (
+        getSmartActivitySnapshot()
+      );
+    }
+  );
 }
 
 function createWindow(): BrowserWindow {
@@ -706,6 +726,45 @@ app.whenReady().then(async () => {
           recordLiveRequest(
             event
           );
+          const smartUpdate =
+            pushSmartActivity(
+              event
+            );
+
+          const surfaceSmartUpdate =
+            shouldSurfaceSmartActivity(
+              smartUpdate.group
+            );
+
+          if (
+            surfaceSmartUpdate
+          ) {
+            broadcastLiveEvent(
+              "smart:group-update",
+              smartUpdate
+            );
+          }
+
+          if (
+            !app.isPackaged &&
+            smartUpdate.created &&
+            surfaceSmartUpdate
+          ) {
+            const primary =
+              smartUpdate.group
+                .primaryRequest;
+
+            console.log(
+              "[SMART] NEW · " +
+                `${smartUpdate.group.domain} · ` +
+                `${smartUpdate.group.layer} · ` +
+                (
+                  primary
+                    ? `${primary.method} ${primary.path}`
+                    : "important background activity"
+                )
+            );
+          }
 
           if (
             !app.isPackaged
