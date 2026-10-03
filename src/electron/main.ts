@@ -48,6 +48,11 @@ import {
 } from "./startup.js";
 
 import {
+  startConfiguredLiveCollector,
+  stopConfiguredLiveCollector
+} from "./live-collector-service.js";
+
+import {
   forgetSshPassphrase,
   hasSshPassphrase,
   rememberSshPassphrase
@@ -534,6 +539,13 @@ app.setName(
   BRAND.productName
 );
 
+app.once(
+  "before-quit",
+  () => {
+    stopConfiguredLiveCollector();
+  }
+);
+
 app.whenReady().then(async () => {
   Menu.setApplicationMenu(null);
 
@@ -563,6 +575,81 @@ app.whenReady().then(async () => {
 
   registerIpc();
   createWindow();
+
+  void startConfiguredLiveCollector(
+    app.getPath(
+      "userData"
+    ),
+    app.getLocale(),
+    {
+      onStatus:
+        status => {
+          if (
+            !app.isPackaged
+          ) {
+            const retry =
+              status.retryInMs ===
+                undefined
+                ? ""
+                : ` · retry ${status.retryInMs / 1000}s`;
+
+            const projects =
+              status.projectCount ===
+                undefined
+                ? ""
+                : ` · ${status.projectCount} projects`;
+
+            const message =
+              status.message
+                ? ` · ${status.message}`
+                : "";
+
+            console.log(
+              `[COLLECTOR] ${status.state}${projects}${retry}${message}`
+            );
+          }
+        },
+
+      onRequest:
+        event => {
+          if (
+            !app.isPackaged
+          ) {
+            console.log(
+              `[LIVE] ${event.domain} · ` +
+                `${event.category} · ` +
+                `${event.status} ` +
+                `${event.method} ` +
+                `${event.path}`
+            );
+          }
+        },
+
+      onRotation:
+        event => {
+          if (
+            !app.isPackaged
+          ) {
+            console.log(
+              `[ROTATION] ${event.domain} · ${event.state}`
+            );
+          }
+        }
+    }
+  ).catch(
+    (
+      error: unknown
+    ) => {
+      if (
+        !app.isPackaged
+      ) {
+        console.error(
+          "[COLLECTOR] startup failed:",
+          error
+        );
+      }
+    }
+  );
 
   app.on(
     "activate",
