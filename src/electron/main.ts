@@ -48,6 +48,7 @@ import {
 } from "./startup.js";
 
 import {
+  restartConfiguredLiveCollector,
   startConfiguredLiveCollector,
   stopConfiguredLiveCollector
 } from "./live-collector-service.js";
@@ -548,6 +549,57 @@ function registerIpc(): void {
     }
   );
 
+  ipcMain.handle(
+    "monitoring:set-projects",
+    async (
+      event:
+        IpcMainInvokeEvent,
+
+      domains:
+        unknown
+    ) => {
+      assertTrustedSender(
+        event
+      );
+
+      if (
+        domains !== null &&
+        (
+          !Array.isArray(
+            domains
+          ) ||
+          domains.some(
+            domain =>
+              typeof domain !==
+              "string"
+          )
+        )
+      ) {
+        throw new Error(
+          "Invalid monitored project selection."
+        );
+      }
+
+      const preferences =
+        await updatePreferences(
+          app.getPath(
+            "userData"
+          ),
+          app.getLocale(),
+          {
+            monitoredProjectDomains:
+              domains
+          }
+        );
+
+      await restartConfiguredLiveCollector();
+
+      return (
+        preferences
+          .monitoredProjectDomains
+      );
+    }
+  );
   ipcMain.handle(
     "live:get-snapshot",
     (

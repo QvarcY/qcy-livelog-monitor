@@ -230,6 +230,26 @@ export class LiveCollector {
       hooks;
   }
 
+  private monitoredDomains:
+    Set<string> | null =
+      null;
+
+  setMonitoredDomains(
+    domains:
+      readonly string[] | null
+  ): void {
+    this.monitoredDomains =
+      domains === null
+        ? null
+        : new Set(
+            domains.map(
+              domain =>
+                domain
+                  .trim()
+                  .toLowerCase()
+            )
+          );
+  }
   private emitStatus(
     status: LiveCollectorStatus
   ): void {
@@ -750,7 +770,7 @@ export class LiveCollector {
               retryAttempt
           });
 
-          const logs =
+          const discoveredLogs =
             await Promise.race([
               discoverLogs(
                 client,
@@ -770,6 +790,21 @@ export class LiveCollector {
 
               disconnected
             ]);
+
+          const logs =
+            this.monitoredDomains ===
+              null
+              ? discoveredLogs
+              : discoveredLogs.filter(
+                  log =>
+                    this
+                      .monitoredDomains
+                      ?.has(
+                        log.domain
+                          .toLowerCase()
+                      ) ??
+                    false
+                );
 
           if (
             logs.length ===

@@ -57,6 +57,9 @@ export interface AppPreferences {
 
   autoConnect: boolean;
   launchAtLogin: boolean;
+
+  monitoredProjectDomains:
+    string[] | null;
 }
 
 export interface AppPreferencesPatch {
@@ -69,6 +72,9 @@ export interface AppPreferencesPatch {
 
   autoConnect?: boolean;
   launchAtLogin?: boolean;
+
+  monitoredProjectDomains?:
+    string[] | null;
 }
 
 export type LiveLogCategory =
@@ -197,6 +203,11 @@ export interface QcYLiveLogApi {
     request: LogDiscoveryRequest,
     passphrase?: string
   ): Promise<DiscoveredLog[]>;
+
+  setMonitoredProjects(
+    domains:
+      string[] | null
+  ): Promise<string[] | null>;
 
   getLiveSnapshot():
     Promise<LiveCollectorSnapshot>;

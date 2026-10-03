@@ -137,6 +137,14 @@ const api = Object.freeze({
       profileId
     ),
 
+  setMonitoredProjects: (
+    domains
+  ) =>
+    ipcRenderer.invoke(
+      "monitoring:set-projects",
+      domains
+    ),
+
   getLiveSnapshot: () =>
     ipcRenderer.invoke(
       "live:get-snapshot"

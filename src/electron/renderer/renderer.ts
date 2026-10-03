@@ -14,6 +14,10 @@ import {
 } from "./server-panel.js";
 
 import {
+  setupProjectMonitorTree
+} from "./project-monitor-tree.js";
+
+import {
   setupLiveBridge
 } from "./live-bridge.js";
 
@@ -270,125 +274,16 @@ function renderStartupProjects(
     fileName: string;
   }>
 ): void {
-  const list =
-    requireElement<HTMLDivElement>(
-      "project-list"
-    );
-
-  const count =
-    requireElement<HTMLSpanElement>(
-      "project-count"
-    );
-
-  for (
-    const row of Array.from(
-      list.querySelectorAll(
-        '.project-row[data-project-id]'
-      )
-    )
-  ) {
-    row.remove();
-  }
-
-  list.querySelector(
-    ".project-empty"
-  )?.remove();
-
-  count.textContent =
-    String(
-      logs.length
-    );
-
-  const allProjects =
-    list.querySelector(
-      ".project-row"
-    );
-
-  const allValue =
-    allProjects?.querySelector<HTMLElement>(
-      ".project-value"
-    );
-
-  if (allValue) {
-    allValue.textContent =
-      String(
-        logs.length
+  void setupProjectMonitorTree(
+    logs
+  ).catch(
+    error => {
+      console.error(
+        "Project monitor tree failed:",
+        error
       );
-  }
-
-  for (const log of logs) {
-    const row =
-      document.createElement(
-        "button"
-      );
-
-    row.type =
-      "button";
-
-    row.className =
-      "project-row";
-
-    row.dataset.projectId =
-      log.domain;
-
-    const state =
-      document.createElement(
-        "span"
-      );
-
-    state.className =
-      "project-state";
-
-    const main =
-      document.createElement(
-        "span"
-      );
-
-    main.className =
-      "project-main";
-
-    const name =
-      document.createElement(
-        "strong"
-      );
-
-    name.textContent =
-      log.domain;
-
-    const source =
-      document.createElement(
-        "small"
-      );
-
-    source.textContent =
-      log.fileName;
-
-    main.append(
-      name,
-      source
-    );
-
-    const value =
-      document.createElement(
-        "span"
-      );
-
-    value.className =
-      "project-value";
-
-    value.textContent =
-      "—";
-
-    row.append(
-      state,
-      main,
-      value
-    );
-
-    list.append(
-      row
-    );
-  }
+    }
+  );
 }
 
 async function boot(): Promise<void> {

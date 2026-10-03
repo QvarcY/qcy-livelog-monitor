@@ -23,6 +23,10 @@ export type ConfiguredCollectorStartResult =
       status: "profile-missing";
     }
   | {
+      status:
+        "no-projects-selected";
+    }
+  | {
       status: "started";
       profileId: string;
       profileName: string;
@@ -30,6 +34,14 @@ export type ConfiguredCollectorStartResult =
 
 let activeCollector:
   LiveCollector | null =
+    null;
+
+let lastStart:
+  {
+    dataDirectory: string;
+    locale: string;
+    hooks: LiveCollectorHooks;
+  } | null =
     null;
 
 export function stopConfiguredLiveCollector():
@@ -45,6 +57,12 @@ export async function startConfiguredLiveCollector(
   locale: string,
   hooks: LiveCollectorHooks = {}
 ): Promise<ConfiguredCollectorStartResult> {
+  lastStart = {
+    dataDirectory,
+    locale,
+    hooks
+  };
+
   stopConfiguredLiveCollector();
 
   const preferences =
@@ -64,6 +82,28 @@ export async function startConfiguredLiveCollector(
     };
   }
 
+  if (
+    preferences
+      .monitoredProjectDomains !==
+      null &&
+    preferences
+      .monitoredProjectDomains
+      .length ===
+      0
+  ) {
+    hooks.onStatus?.({
+      state: "stopped",
+      attempt: 0,
+      projectCount: 0,
+      message:
+        "No projects selected."
+    });
+
+    return {
+      status:
+        "no-projects-selected"
+    };
+  }
   const profiles =
     await readServerProfiles(
       dataDirectory
@@ -96,6 +136,11 @@ export async function startConfiguredLiveCollector(
       passphrase,
       hooks
     );
+
+  collector.setMonitoredDomains(
+    preferences
+      .monitoredProjectDomains
+  );
 
   activeCollector =
     collector;
@@ -130,4 +175,18 @@ export async function startConfiguredLiveCollector(
     profileName:
       profile.name
   };
+}
+export async function restartConfiguredLiveCollector():
+  Promise<ConfiguredCollectorStartResult> {
+  if (!lastStart) {
+    return {
+      status: "disabled"
+    };
+  }
+
+  return startConfiguredLiveCollector(
+    lastStart.dataDirectory,
+    lastStart.locale,
+    lastStart.hooks
+  );
 }

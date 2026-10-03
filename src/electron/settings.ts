@@ -6,6 +6,11 @@ import {
 
 import path from "node:path";
 
+import {
+  normalizeMonitoredProjectDomains,
+  type MonitoredProjectDomains
+} from "../project-monitoring.js";
+
 export type AppLanguage =
   | "en"
   | "lv";
@@ -24,6 +29,9 @@ export interface AppPreferences {
 
   autoConnect: boolean;
   launchAtLogin: boolean;
+
+  monitoredProjectDomains:
+    MonitoredProjectDomains;
 }
 
 function getDefaultPreferences(
@@ -44,7 +52,10 @@ function getDefaultPreferences(
       null,
 
     autoConnect: false,
-    launchAtLogin: false
+    launchAtLogin: false,
+
+    monitoredProjectDomains:
+      null
   };
 }
 
@@ -185,6 +196,12 @@ export async function readPreferences(
         normalizeBoolean(
           parsed.launchAtLogin,
           defaults.launchAtLogin
+        ),
+
+      monitoredProjectDomains:
+        normalizeMonitoredProjectDomains(
+          parsed.monitoredProjectDomains,
+          defaults.monitoredProjectDomains
         )
     };
   } catch {
@@ -248,7 +265,18 @@ export async function updatePreferences(
       normalizeBoolean(
         input.launchAtLogin,
         current.launchAtLogin
-      )
+      ),
+
+    monitoredProjectDomains:
+      input.monitoredProjectDomains ===
+        undefined
+        ? current
+            .monitoredProjectDomains
+        : normalizeMonitoredProjectDomains(
+            input.monitoredProjectDomains,
+            current
+              .monitoredProjectDomains
+          )
   };
 
   await mkdir(
