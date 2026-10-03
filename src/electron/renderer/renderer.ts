@@ -1,3 +1,14 @@
+import {
+  applyTranslations,
+  translate,
+  type Language
+} from "./i18n.js";
+
+import type {
+  AppPreferences,
+  AppTheme
+} from "../window.js";
+
 function requireElement<T extends HTMLElement>(
   id: string
 ): T {
@@ -11,6 +22,97 @@ function requireElement<T extends HTMLElement>(
   }
 
   return element as T;
+}
+
+let focusMode = false;
+
+function updateFocusControl(
+  language: Language
+): void {
+  const button =
+    requireElement<HTMLButtonElement>(
+      "focus-toggle"
+    );
+
+  const label =
+    requireElement<HTMLSpanElement>(
+      "focus-toggle-label"
+    );
+
+  label.textContent =
+    translate(
+      language,
+      focusMode
+        ? "exitFocusMode"
+        : "focusMode"
+    );
+
+  button.title =
+    translate(
+      language,
+      "focusModeTitle"
+    );
+
+  button.setAttribute(
+    "aria-pressed",
+    String(focusMode)
+  );
+}
+
+function setFocusMode(
+  enabled: boolean,
+  language: Language
+): void {
+  focusMode = enabled;
+
+  document.body.classList.toggle(
+    "is-focus-mode",
+    enabled
+  );
+
+  updateFocusControl(
+    language
+  );
+}
+
+function updateAlwaysOnTopControl(
+  preferences: AppPreferences
+): void {
+  const button =
+    requireElement<HTMLButtonElement>(
+      "always-on-top-toggle"
+    );
+
+  const label =
+    requireElement<HTMLSpanElement>(
+      "always-on-top-label"
+    );
+
+  label.textContent =
+    translate(
+      preferences.language,
+      preferences.alwaysOnTop
+        ? "alwaysOnTopActive"
+        : "alwaysOnTop"
+    );
+
+  button.title =
+    translate(
+      preferences.language,
+      "alwaysOnTopTitle"
+    );
+
+  button.classList.toggle(
+    "is-active",
+    preferences.alwaysOnTop
+  );
+
+  button.setAttribute(
+    "aria-pressed",
+    String(
+      preferences.alwaysOnTop
+    )
+  );
 }
 
 function buildEmptyTimeline(): void {
@@ -42,13 +144,106 @@ function buildEmptyTimeline(): void {
   }
 }
 
-async function boot(): Promise<void> {
-  buildEmptyTimeline();
+function applyPreferences(
+  preferences: AppPreferences
+): void {
+  document.documentElement.dataset.theme =
+    preferences.theme;
 
+  applyTranslations(
+    preferences.language
+  );
+
+  updatePreferenceControls(
+    preferences
+  );
+
+  updateFocusControl(
+    preferences.language
+  );
+
+  updateAlwaysOnTopControl(
+    preferences
+  );
+}
+
+function updatePreferenceControls(
+  preferences: AppPreferences
+): void {
+  const languageButton =
+    requireElement<HTMLButtonElement>(
+      "language-toggle"
+    );
+
+  const themeButton =
+    requireElement<HTMLButtonElement>(
+      "theme-toggle"
+    );
+
+  languageButton.textContent =
+    preferences.language.toUpperCase();
+
+  languageButton.title =
+    translate(
+      preferences.language,
+      "switchLanguage"
+    );
+
+  themeButton.textContent =
+    translate(
+      preferences.language,
+      preferences.theme
+    );
+
+  themeButton.title =
+    translate(
+      preferences.language,
+      "switchTheme"
+    );
+}
+
+function setShellStatus(
+  language: Language,
+  state:
+    | "ready"
+    | "error"
+): void {
   const status =
     requireElement<HTMLDivElement>(
       "shell-status"
     );
+
+  status.classList.remove(
+    "is-ready",
+    "is-error"
+  );
+
+  const label =
+    state === "ready"
+      ? translate(
+          language,
+          "shellReady"
+        )
+      : translate(
+          language,
+          "bridgeError"
+        );
+
+  status.innerHTML =
+    [
+      '<span class="connection-dot"></span>',
+      `<span>${label}</span>`
+    ].join("");
+
+  status.classList.add(
+    state === "ready"
+      ? "is-ready"
+      : "is-error"
+  );
+}
+
+async function boot(): Promise<void> {
+  buildEmptyTimeline();
 
   const version =
     requireElement<HTMLSpanElement>(
@@ -70,10 +265,56 @@ async function boot(): Promise<void> {
       "support-link"
     );
 
+  const languageButton =
+    requireElement<HTMLButtonElement>(
+      "language-toggle"
+    );
+
+  const themeButton =
+    requireElement<HTMLButtonElement>(
+      "theme-toggle"
+    );
+
+  const focusButton =
+    requireElement<HTMLButtonElement>(
+      "focus-toggle"
+    );
+
+  const alwaysOnTopButton =
+    requireElement<HTMLButtonElement>(
+      "always-on-top-toggle"
+    );
+
+  let preferences =
+    await window.qcyLiveLog
+      .getPreferences();
+
+  const appliedAlwaysOnTop =
+    await window.qcyLiveLog
+      .setAlwaysOnTop(
+        preferences.alwaysOnTop
+      );
+
+  if (
+    appliedAlwaysOnTop !==
+    preferences.alwaysOnTop
+  ) {
+    preferences =
+      await window.qcyLiveLog
+        .updatePreferences({
+          alwaysOnTop:
+            appliedAlwaysOnTop
+        });
+  }
+
+  applyPreferences(
+    preferences
+  );
+
   authorLink.addEventListener(
     "click",
     () => {
-      void window.areaLiveLogs
+      void window.qcyLiveLog
         .openBrandLink(
           "github"
         );
@@ -83,16 +324,127 @@ async function boot(): Promise<void> {
   supportLink.addEventListener(
     "click",
     () => {
-      void window.areaLiveLogs
+      void window.qcyLiveLog
         .openBrandLink(
           "support"
         );
     }
   );
 
+  languageButton.addEventListener(
+    "click",
+    async () => {
+      const language =
+        preferences.language === "en"
+          ? "lv"
+          : "en";
+
+      preferences =
+        await window.qcyLiveLog
+          .updatePreferences({
+            language
+          });
+
+      applyPreferences(
+        preferences
+      );
+
+      setShellStatus(
+        preferences.language,
+        "ready"
+      );
+    }
+  );
+
+  themeButton.addEventListener(
+    "click",
+    async () => {
+      const theme: AppTheme =
+        preferences.theme === "dark"
+          ? "light"
+          : "dark";
+
+      preferences =
+        await window.qcyLiveLog
+          .updatePreferences({
+            theme
+          });
+
+      applyPreferences(
+        preferences
+      );
+    }
+  );
+
+  alwaysOnTopButton.addEventListener(
+    "click",
+    async () => {
+      const requested =
+        !preferences.alwaysOnTop;
+
+      const actual =
+        await window.qcyLiveLog
+          .setAlwaysOnTop(
+            requested
+          );
+
+      preferences =
+        await window.qcyLiveLog
+          .updatePreferences({
+            alwaysOnTop: actual
+          });
+
+      applyPreferences(
+        preferences
+      );
+    }
+  );
+
+  focusButton.addEventListener(
+    "click",
+    () => {
+      setFocusMode(
+        !focusMode,
+        preferences.language
+      );
+    }
+  );
+
+  window.addEventListener(
+    "keydown",
+    (
+      event: KeyboardEvent
+    ) => {
+      if (
+        event.ctrlKey &&
+        event.shiftKey &&
+        event.key.toLowerCase() === "l"
+      ) {
+        event.preventDefault();
+
+        setFocusMode(
+          !focusMode,
+          preferences.language
+        );
+
+        return;
+      }
+
+      if (
+        event.key === "Escape" &&
+        focusMode
+      ) {
+        setFocusMode(
+          false,
+          preferences.language
+        );
+      }
+    }
+  );
+
   try {
     const info =
-      await window.areaLiveLogs
+      await window.qcyLiveLog
         .getAppInfo();
 
     version.textContent =
@@ -101,14 +453,9 @@ async function boot(): Promise<void> {
     platform.textContent =
       info.platform;
 
-    status.innerHTML =
-      [
-        '<span class="connection-dot"></span>',
-        "<span>Shell ready</span>"
-      ].join("");
-
-    status.classList.add(
-      "is-ready"
+    setShellStatus(
+      preferences.language,
+      "ready"
     );
   } catch (error: unknown) {
     const message =
@@ -116,14 +463,9 @@ async function boot(): Promise<void> {
         ? error.message
         : String(error);
 
-    status.innerHTML =
-      [
-        '<span class="connection-dot"></span>',
-        "<span>Bridge error</span>"
-      ].join("");
-
-    status.classList.add(
-      "is-error"
+    setShellStatus(
+      preferences.language,
+      "error"
     );
 
     platform.textContent =

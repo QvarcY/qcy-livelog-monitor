@@ -816,3 +816,575 @@ input:disabled {
   background: rgba(139, 135, 255, 0.08);
   color: #cfcdff;
 }
+/* preferences */
+
+.context-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.preference-control {
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid #30323a;
+  border-radius: 4px;
+  background: #121318;
+  color: #8b8d97;
+  font-family: var(--mono);
+  font-size: 9px;
+  cursor: pointer;
+}
+
+.preference-control:hover {
+  border-color: #454852;
+  color: #d0d1d7;
+}
+
+/* light theme */
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f5f5f6;
+  --panel: #ffffff;
+  --panel-raised: #f2f2f4;
+  --panel-hover: #ececef;
+
+  --line: #d9d9df;
+  --line-soft: #e6e6ea;
+
+  --text: #202126;
+  --text-secondary: #5f6169;
+  --text-muted: #878993;
+
+  --accent: #625ee8;
+  --accent-soft: rgba(98, 94, 232, 0.10);
+
+  --green: #218a61;
+  --yellow: #a16c13;
+  --red: #c34d4d;
+  --blue: #3474cc;
+}
+
+:root[data-theme="light"] body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .sidebar,
+:root[data-theme="light"] .statusbar {
+  background: #f0f0f2;
+}
+
+:root[data-theme="light"] .brand-symbol,
+:root[data-theme="light"] .connection-status,
+:root[data-theme="light"] .preference-control,
+:root[data-theme="light"] .toolbar-actions button {
+  border-color: #d2d2d8;
+  background: #ffffff;
+  color: #60626b;
+}
+
+:root[data-theme="light"] .brand-copy strong,
+:root[data-theme="light"] .breadcrumbs strong,
+:root[data-theme="light"] .events-header strong,
+:root[data-theme="light"] .activity-header strong,
+:root[data-theme="light"] .details-header strong {
+  color: #24252a;
+}
+
+:root[data-theme="light"] .brand-copy span,
+:root[data-theme="light"] .sidebar-heading,
+:root[data-theme="light"] .project-empty,
+:root[data-theme="light"] .runtime-mini,
+:root[data-theme="light"] .breadcrumbs,
+:root[data-theme="light"] .activity-header span,
+:root[data-theme="light"] .activity-range,
+:root[data-theme="light"] .events-header span,
+:root[data-theme="light"] .stream-hint,
+:root[data-theme="light"] .details-header span,
+:root[data-theme="light"] .detail-label,
+:root[data-theme="light"] .statusbar {
+  color: #7b7d86;
+}
+
+:root[data-theme="light"] .nav-item {
+  color: #666872;
+}
+
+:root[data-theme="light"] .nav-item.is-active {
+  background: var(--accent-soft);
+  color: #504cc5;
+}
+
+:root[data-theme="light"] .project-row.is-active {
+  background: #e9e9ec;
+}
+
+:root[data-theme="light"] .project-main strong {
+  color: #414249;
+}
+
+:root[data-theme="light"] .context-bar,
+:root[data-theme="light"] .event-columns {
+  background: #f7f7f8;
+}
+
+:root[data-theme="light"] .toolbar,
+:root[data-theme="light"] .events-header {
+  background: #f3f3f5;
+}
+
+:root[data-theme="light"] .search {
+  border-color: #d1d1d7;
+  background: #ffffff;
+}
+
+:root[data-theme="light"] .search input {
+  color: #34353b;
+}
+
+:root[data-theme="light"] .search input::placeholder {
+  color: #999ba3;
+}
+
+:root[data-theme="light"] .activity,
+:root[data-theme="light"] .timeline-empty {
+  background: #fafafa;
+}
+
+:root[data-theme="light"] .timeline-grid span {
+  border-color: #ececef;
+}
+
+:root[data-theme="light"] .timeline-bar {
+  background: #d4d4da;
+}
+
+:root[data-theme="light"] .event-list {
+  background: #ffffff;
+}
+
+:root[data-theme="light"] .empty-event strong,
+:root[data-theme="light"] .details-empty strong {
+  color: #55575f;
+}
+
+:root[data-theme="light"] .empty-event p,
+:root[data-theme="light"] .details-empty p {
+  color: #858790;
+}
+
+:root[data-theme="light"] .details {
+  background: #f8f8f9;
+}
+
+:root[data-theme="light"] .detail-pair {
+  border-color: #e7e7eb;
+}
+
+:root[data-theme="light"] .detail-pair strong {
+  color: #555760;
+}
+
+:root[data-theme="light"] .brand-link {
+  border-color: #d0d0d6;
+  color: #60626b;
+}
+
+:root[data-theme="light"] .brand-link:hover,
+:root[data-theme="light"] .preference-control:hover {
+  border-color: #aaaab2;
+  background: #e9e9ed;
+  color: #25262b;
+}
+
+:root[data-theme="light"] .brand-link.support-link {
+  color: #5e59c5;
+}
+
+:root[data-theme="light"] .connection-status.is-ready {
+  color: #187653;
+}
+/* live focus mode */
+
+.events-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.focus-toggle {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 8px;
+  cursor: pointer;
+}
+
+.focus-toggle:hover {
+  border-color: #464953;
+  background: var(--panel-hover);
+  color: var(--text);
+}
+
+.focus-icon {
+  color: var(--accent);
+  font-size: 10px;
+}
+
+body.is-focus-mode .app {
+  grid-template-columns: 1fr;
+}
+
+body.is-focus-mode .sidebar {
+  display: none;
+}
+
+body.is-focus-mode .main {
+  grid-template-rows:
+    minmax(0, 1fr);
+}
+
+body.is-focus-mode .context-bar,
+body.is-focus-mode .toolbar,
+body.is-focus-mode .activity,
+body.is-focus-mode .statusbar {
+  display: none;
+}
+
+body.is-focus-mode .workspace {
+  grid-template-columns: 1fr;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+body.is-focus-mode .details {
+  display: none;
+}
+
+body.is-focus-mode .events {
+  grid-template-rows:
+    38px
+    30px
+    minmax(0, 1fr);
+
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+body.is-focus-mode .events-header {
+  padding-left: 12px;
+  padding-right: 12px;
+}
+
+body.is-focus-mode .event-list {
+  height: 100%;
+}
+
+body.is-focus-mode .focus-toggle {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+:root[data-theme="light"] .focus-toggle {
+  border-color: #d1d1d7;
+  color: #696b74;
+}
+
+:root[data-theme="light"] .focus-toggle:hover {
+  border-color: #aaaab2;
+  background: #e9e9ed;
+  color: #25262b;
+}
+
+:root[data-theme="light"]
+  body.is-focus-mode
+  .focus-toggle {
+  border-color: var(--accent);
+  color: #3f3baf;
+}
+/* always on top */
+
+.pin-toggle.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #cbc9ff;
+}
+
+.pin-toggle.is-active .focus-icon {
+  color: var(--green);
+}
+
+body.is-focus-mode
+  .pin-toggle:not(.is-active) {
+  border-color: var(--line);
+  color: var(--text-muted);
+}
+
+:root[data-theme="light"]
+  .pin-toggle.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: #4945bb;
+}
+
+:root[data-theme="light"]
+  body.is-focus-mode
+  .pin-toggle:not(.is-active) {
+  border-color: #d1d1d7;
+  color: #696b74;
+}
+/* responsive compact window */
+
+.events-header {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.events-header > div:first-child {
+  min-width: 0;
+}
+
+.events-actions {
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.stream-hint {
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.focus-toggle {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/*
+ * The detail drawer is useful on wide screens.
+ * Below this point the live stream gets priority.
+ */
+@media (max-width: 1280px) {
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .details {
+    display: none;
+  }
+}
+
+/*
+ * Keep the normal desktop navigation,
+ * but make it narrower before hiding it.
+ */
+@media (max-width: 1080px) {
+  .app {
+    grid-template-columns:
+      184px
+      minmax(0, 1fr);
+  }
+
+  .brand {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .sidebar-heading {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .stream-hint {
+    display: none;
+  }
+}
+
+/*
+ * At laptop / narrow-window width the sidebar
+ * stops consuming valuable live-log space.
+ */
+@media (max-width: 820px) {
+  .app {
+    grid-template-columns:
+      minmax(0, 1fr);
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .toolbar-actions button:nth-child(2),
+  .toolbar-actions button:nth-child(3) {
+    display: none;
+  }
+}
+
+/*
+ * Compact live table.
+ * Type is less important than request/status/delay
+ * when horizontal space gets tight.
+ */
+@media (max-width: 700px) {
+  .event-columns {
+    grid-template-columns:
+      58px
+      minmax(150px, 1fr)
+      54px
+      58px;
+  }
+
+  .event-columns > :nth-child(3) {
+    display: none;
+  }
+
+  .event-row > :nth-child(3) {
+    display: none;
+  }
+
+  .toolbar-actions {
+    display: none;
+  }
+
+  .search {
+    max-width: none;
+  }
+}
+
+/*
+ * Short windows should spend their height
+ * on actual requests instead of the histogram.
+ */
+@media (max-height: 520px) {
+  .activity {
+    display: none;
+  }
+
+  .main {
+    grid-template-rows:
+      48px
+      44px
+      minmax(0, 1fr)
+      28px;
+  }
+}
+
+/*
+ * Mini-monitor mode.
+ * The window can now become genuinely small
+ * without the surrounding UI crushing the log view.
+ */
+@media (max-width: 520px) {
+  .context-bar,
+  .toolbar,
+  .activity,
+  .statusbar {
+    display: none;
+  }
+
+  .main {
+    grid-template-rows:
+      minmax(0, 1fr);
+  }
+
+  .workspace {
+    width: 100%;
+    height: 100%;
+  }
+
+  .events {
+    width: 100%;
+    height: 100%;
+    grid-template-rows:
+      38px
+      30px
+      minmax(0, 1fr);
+  }
+
+  .events-header {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .events-header > div:first-child span {
+    display: none;
+  }
+
+  .focus-toggle {
+    width: 26px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .focus-toggle > span:last-child {
+    display: none;
+  }
+
+  .event-columns {
+    grid-template-columns:
+      minmax(150px, 1fr)
+      52px
+      56px;
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .event-columns > :nth-child(1),
+  .event-columns > :nth-child(3) {
+    display: none;
+  }
+
+  .event-row > :nth-child(1),
+  .event-row > :nth-child(3) {
+    display: none;
+  }
+}
+
+/*
+ * Focus mode always wins over responsive rules.
+ */
+body.is-focus-mode .sidebar,
+body.is-focus-mode .context-bar,
+body.is-focus-mode .toolbar,
+body.is-focus-mode .activity,
+body.is-focus-mode .details,
+body.is-focus-mode .statusbar {
+  display: none;
+}
+
+body.is-focus-mode .app,
+body.is-focus-mode .workspace,
+body.is-focus-mode .events {
+  width: 100%;
+  height: 100%;
+}
+
+body.is-focus-mode .main {
+  grid-template-rows:
+    minmax(0, 1fr);
+}
+
+body.is-focus-mode .workspace {
+  grid-template-columns:
+    minmax(0, 1fr);
+}
+
+body.is-focus-mode .events {
+  grid-template-rows:
+    38px
+    30px
+    minmax(0, 1fr);
+}

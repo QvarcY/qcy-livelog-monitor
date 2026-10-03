@@ -19,6 +19,11 @@ import {
   getBrandLink
 } from "../brand.js";
 
+import {
+  readPreferences,
+  updatePreferences
+} from "./settings.js";
+
 const moduleFile = fileURLToPath(
   import.meta.url
 );
@@ -101,14 +106,75 @@ function registerIpc(): void {
       return true;
     }
   );
+  ipcMain.handle(
+    "settings:get",
+    async (
+      event: IpcMainInvokeEvent
+    ) => {
+      assertTrustedSender(event);
+
+      return readPreferences(
+        app.getPath("userData"),
+        app.getLocale()
+      );
+    }
+  );
+
+  ipcMain.handle(
+    "settings:update",
+    async (
+      event: IpcMainInvokeEvent,
+      patch: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      return updatePreferences(
+        app.getPath("userData"),
+        app.getLocale(),
+        patch
+      );
+    }
+  );
+  ipcMain.handle(
+    "window:set-always-on-top",
+    (
+      event: IpcMainInvokeEvent,
+      enabled: unknown
+    ) => {
+      assertTrustedSender(event);
+
+      if (typeof enabled !== "boolean") {
+        throw new Error(
+          "Invalid always-on-top value."
+        );
+      }
+
+      const window =
+        BrowserWindow.fromWebContents(
+          event.sender
+        );
+
+      if (!window) {
+        throw new Error(
+          "Renderer window not found."
+        );
+      }
+
+      window.setAlwaysOnTop(
+        enabled
+      );
+
+      return window.isAlwaysOnTop();
+    }
+  );
 }
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
     width: 1380,
     height: 860,
-    minWidth: 980,
-    minHeight: 640,
+    minWidth: 360,
+    minHeight: 240,
     show: false,
     title: BRAND.productName,
     backgroundColor: "#0a0f18",
