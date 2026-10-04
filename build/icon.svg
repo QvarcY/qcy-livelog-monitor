@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="qcy-gradient" x1="180" y1="160" x2="850" y2="860" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8B7CFF"/>
+      <stop offset="0.52" stop-color="#6F63FF"/>
+      <stop offset="1" stop-color="#4FC3F7"/>
+    </linearGradient>
+    <radialGradient id="qcy-bg" cx="0" cy="0" r="1" gradientTransform="translate(330 250) rotate(48) scale(900)">
+      <stop offset="0" stop-color="#17213A"/>
+      <stop offset="0.55" stop-color="#0B111F"/>
+      <stop offset="1" stop-color="#070B12"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="44" y="44" width="936" height="936" rx="220" fill="url(#qcy-bg)"/>
+  <rect x="52" y="52" width="920" height="920" rx="212" fill="none" stroke="#27324B" stroke-width="16"/>
+
+  <circle
+    cx="486"
+    cy="470"
+    r="255"
+    fill="none"
+    stroke="url(#qcy-gradient)"
+    stroke-width="108"
+    stroke-linecap="round"
+  />
+
+  <path
+    d="M650 640 L824 814"
+    fill="none"
+    stroke="url(#qcy-gradient)"
+    stroke-width="108"
+    stroke-linecap="round"
+  />
+
+  <path
+    d="M292 474 H385 L439 365 L522 586 L592 442 L682 442"
+    fill="none"
+    stroke="#F5F7FF"
+    stroke-width="38"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+
+  <circle cx="292" cy="474" r="20" fill="#F5F7FF"/>
+  <circle cx="682" cy="442" r="20" fill="#F5F7FF"/>
+</svg>

@@ -138,8 +138,13 @@ function applyLaunchAtLogin(
     return;
   }
 
+  const executablePath =
+    process.env.PORTABLE_EXECUTABLE_FILE ??
+    process.execPath;
+
   app.setLoginItemSettings({
-    openAtLogin: enabled
+    openAtLogin: enabled,
+    path: executablePath
   });
 }
 
@@ -697,6 +702,14 @@ function createWindow(): BrowserWindow {
 app.setName(
   BRAND.productName
 );
+
+if (
+  process.platform === "win32"
+) {
+  app.setAppUserModelId(
+    "io.github.qvarcy.qcy-livelog-monitor"
+  );
+}
 
 app.once(
   "before-quit",
