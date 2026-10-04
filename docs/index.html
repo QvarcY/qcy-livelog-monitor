@@ -1,0 +1,940 @@
+<!doctype html>
+<html
+  lang="en"
+  data-theme="dark"
+>
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="
+      default-src 'self';
+      script-src 'self';
+      style-src 'self';
+      img-src 'self' data:;
+      connect-src 'none';
+      object-src 'none';
+      base-uri 'none';
+      form-action 'none'
+    "
+  >
+
+  <title>QcY LiveLog Monitor — Interactive Demo</title>
+
+  <link
+    rel="stylesheet"
+    href="./app/electron/renderer/styles.css"
+  >
+  <link rel="stylesheet" href="./demo.css">
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-symbol">
+          A
+        </div>
+
+        <div class="brand-copy">
+          <strong>
+            QcY LiveLog Monitor
+          </strong>
+
+          <span>
+            access monitor
+          </span>
+        </div>
+      </div>
+
+      <nav class="primary-nav">
+        <button class="nav-item is-active">
+          <span class="nav-icon">
+            ◉
+          </span>
+
+          <span data-i18n="live">
+            Live
+          </span>
+        </button>
+
+        <button
+          id="servers-button"
+          class="nav-item"
+          type="button"
+        >
+          <span class="nav-icon">
+            ▣
+          </span>
+
+          <span data-i18n="servers">
+            Servers
+          </span>
+        </button>
+
+        <button class="nav-item" disabled>
+          <span class="nav-icon">
+            ◫
+          </span>
+
+          <span data-i18n="history">
+            History
+          </span>
+        </button>
+      </nav>
+
+      <div class="sidebar-heading">
+        <span data-i18n="projects">
+          Projects
+        </span>
+
+        <span id="project-count">
+          —
+        </span>
+      </div>
+
+      <div id="project-list" class="project-list">
+        <button class="project-row is-active">
+          <span class="project-state"></span>
+
+          <span class="project-main">
+            <strong data-i18n="allProjects">
+              All projects
+            </strong>
+
+            <small data-i18n="liveStream">
+              live stream
+            </small>
+          </span>
+
+          <span class="project-value">
+            —
+          </span>
+        </button>
+
+        <div
+          class="project-empty"
+          data-i18n="projectsAfterConnection"
+        >
+          Projects will appear after SSH connection.
+        </div>
+      </div>
+
+      <div class="sidebar-bottom">
+        <div class="brand-links">
+          <button
+            id="author-link"
+            class="brand-link"
+            type="button"
+          >
+            By QvarcY
+          </button>
+
+          <button
+            id="support-link"
+            class="brand-link support-link"
+            type="button"
+          >
+            Buy Me a Coffee
+          </button>
+        </div>
+
+        <div class="runtime-mini">
+          <span id="runtime-platform">
+            win32
+          </span>
+
+          <span id="app-version">
+            v—
+          </span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="context-bar">
+        <div class="breadcrumbs">
+          <span data-i18n="area">
+            Servers
+          </span>
+
+          <span class="breadcrumb-separator">
+            /
+          </span>
+
+          <strong data-i18n="live">
+            Live
+          </strong>
+        </div>
+
+        <div class="context-actions">
+          <button
+            id="language-toggle"
+            class="preference-control"
+            type="button"
+            title="Switch language"
+          >
+            EN
+          </button>
+
+          <button
+            id="theme-toggle"
+            class="preference-control"
+            type="button"
+            title="Switch theme"
+          >
+            Dark
+          </button>
+
+          <div
+            id="shell-status"
+            class="connection-status"
+          >
+            <span class="connection-dot"></span>
+
+            <span data-i18n="starting">
+              Starting
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <section class="toolbar">
+        <label class="search">
+          <span class="search-icon">
+            /
+          </span>
+
+          <input
+            type="search"
+            placeholder="Search path, IP, project or user agent"
+            data-i18n-placeholder="searchPlaceholder"
+            disabled
+          >
+
+          <kbd>
+            /
+          </kbd>
+        </label>
+
+        <div class="toolbar-actions">
+          <button disabled>
+            <span data-i18n="filterProject">
+              Project
+            </span>
+            <span>⌄</span>
+          </button>
+
+          <button disabled>
+            <span data-i18n="filterType">
+              Type
+            </span>
+            <span>⌄</span>
+          </button>
+
+          <button disabled>
+            <span data-i18n="filterStatus">
+              Status
+            </span>
+            <span>⌄</span>
+          </button>
+
+          <button
+            class="pause-button"
+            disabled
+          >
+            Ⅱ
+            <span data-i18n="pause">
+              Pause
+            </span>
+          </button>
+        </div>
+      </section>
+
+      <section class="activity">
+        <div class="activity-header">
+          <div>
+            <strong data-i18n="activity">
+              Activity
+            </strong>
+
+            <span data-i18n="requestVolume">
+              request volume
+            </span>
+          </div>
+
+          <div
+            class="activity-range"
+            data-i18n="liveRange"
+          >
+            live · last 60s
+          </div>
+        </div>
+
+        <div class="timeline">
+          <div class="timeline-grid">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+
+          <div
+            id="timeline-bars"
+            class="timeline-bars"
+            aria-hidden="true"
+          ></div>
+
+          <div
+            class="timeline-empty"
+            data-i18n="waitingStream"
+          >
+            Waiting for live stream
+          </div>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <div class="events">
+          <div class="events-header">
+            <div>
+              <strong data-i18n="liveRequests">
+                Live requests
+              </strong>
+
+              <span
+                id="event-count"
+                data-i18n="eventsZero"
+              >
+                0 events
+              </span>
+            </div>
+
+            <div class="events-actions">
+              <div
+                class="stream-hint"
+                data-i18n="newestFirst"
+              >
+                newest first
+              </div>
+
+              <button
+                id="always-on-top-toggle"
+                class="focus-toggle pin-toggle"
+                type="button"
+                aria-pressed="false"
+                title="Keep this window above other windows"
+              >
+                <span class="focus-icon">
+                  ⌃
+                </span>
+
+                <span id="always-on-top-label">
+                  On top
+                </span>
+              </button>
+
+              <button
+                id="focus-toggle"
+                class="focus-toggle"
+                type="button"
+                aria-pressed="false"
+                title="Show only live requests"
+              >
+                <span class="focus-icon">
+                  ⤢
+                </span>
+
+                <span
+                  id="focus-toggle-label"
+                  data-i18n="focusMode"
+                >
+                  Focus
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="event-columns">
+            <span data-i18n="columnTime">
+              Time
+            </span>
+
+            <span data-i18n="columnRequest">
+              Project / request
+            </span>
+
+            <span data-i18n="columnType">
+              Type
+            </span>
+
+            <span data-i18n="columnStatus">
+              Status
+            </span>
+
+            <span data-i18n="columnDelay">
+              Delay
+            </span>
+          </div>
+
+          <div
+            id="event-list"
+            class="event-list"
+          >
+            <div class="empty-event">
+              <div class="empty-event-mark">
+                ›_
+              </div>
+
+              <div>
+                <strong data-i18n="noRequests">
+                  No requests yet
+                </strong>
+
+                <p data-i18n="noRequestsHelp">
+                  Connect the collector and incoming
+                  access-log entries will appear here
+                  in real time.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="details">
+          <div class="details-header">
+            <div>
+              <strong data-i18n="eventDetails">
+                Event details
+              </strong>
+
+              <span data-i18n="inspectRequest">
+                inspect request
+              </span>
+            </div>
+
+            <button
+              class="details-close"
+              disabled
+              aria-label="Close details"
+            >
+              ×
+            </button>
+          </div>
+
+          <div class="details-empty">
+            <div class="details-glyph">
+              ↳
+            </div>
+
+            <strong data-i18n="selectRequest">
+              Select a request
+            </strong>
+
+            <p data-i18n="selectRequestHelp">
+              Request metadata, IP, user agent,
+              referrer and raw access-log data
+              will appear here.
+            </p>
+          </div>
+
+          <div class="detail-section">
+            <div
+              class="detail-label"
+              data-i18n="connection"
+            >
+              Connection
+            </div>
+
+            <div class="detail-pair">
+              <span data-i18n="transport">
+                Transport
+              </span>
+
+              <strong>
+                SSH
+              </strong>
+            </div>
+
+            <div class="detail-pair">
+              <span data-i18n="collector">
+                Collector
+              </span>
+
+              <strong
+                class="muted"
+                data-i18n="offline"
+              >
+                offline
+              </strong>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <footer class="statusbar">
+        <div>
+          <span class="status-indicator"></span>
+
+          <span
+            id="collector-status-text"
+            data-i18n="collectorOffline"
+          >
+            collector offline
+          </span>
+        </div>
+
+        <div class="statusbar-right">
+          <span
+            id="status-event-count"
+            data-i18n="eventsZero"
+          >
+            0 events
+          </span>
+
+          <span class="status-separator">
+            ·
+          </span>
+
+          <span id="status-delay">
+            delay —
+          </span>
+
+          <span class="status-separator">
+            ·
+          </span>
+
+          <span data-i18n="secureRenderer">
+            secure renderer
+          </span>
+        </div>
+      </footer>
+    </main>
+  </div>
+
+  <div
+    id="server-modal"
+    class="server-modal"
+    hidden
+  >
+    <button
+      class="server-modal-backdrop"
+      type="button"
+      aria-label="Close"
+      data-server-modal-backdrop="true"
+    ></button>
+
+    <section
+      class="server-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="server-panel-title"
+    >
+      <header class="server-panel-header">
+        <div>
+          <strong
+            id="server-panel-title"
+            data-i18n="addServer"
+          >
+            Add server
+          </strong>
+
+          <span data-i18n="sshConnection">
+            SSH connection
+          </span>
+        </div>
+
+        <button
+          id="server-modal-close"
+          class="server-panel-close"
+          type="button"
+          title="Close"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="server-panel-content">
+        <aside class="server-profile-sidebar">
+          <div class="server-section-title server-profile-heading">
+            <strong data-i18n="serverProfiles">
+              Server profiles
+            </strong>
+
+            <button
+              id="server-new"
+              class="server-new-button"
+              type="button"
+              data-i18n="newServer"
+            >
+              New server
+            </button>
+          </div>
+
+          <div
+            id="server-profile-list"
+            class="server-profile-list"
+          ></div>
+        </aside>
+
+        <form
+          id="server-form"
+          class="server-form"
+        >
+          <section class="server-form-section">
+            <div class="server-section-title">
+              <strong data-i18n="serverProfileName">
+                Profile name
+              </strong>
+            </div>
+
+            <label class="server-field">
+              <span data-i18n="serverProfileName">
+                Profile name
+              </span>
+
+              <input
+                id="server-name"
+                type="text"
+                required
+                autocomplete="off"
+                placeholder="Production server"
+                data-i18n-placeholder="serverProfileNamePlaceholder"
+              >
+            </label>
+          </section>
+
+          <section class="server-form-section">
+            <div class="server-section-title">
+              <strong data-i18n="sshConnection">
+                SSH connection
+              </strong>
+            </div>
+
+            <div class="server-grid">
+              <label class="server-field server-field-wide">
+                <span data-i18n="sshHost">
+                  Host
+                </span>
+
+                <input
+                  id="server-host"
+                  type="text"
+                  required
+                  autocomplete="off"
+                  placeholder="example.com"
+                >
+              </label>
+
+              <label class="server-field">
+                <span data-i18n="sshPort">
+                  Port
+                </span>
+
+                <input
+                  id="server-port"
+                  type="number"
+                  min="1"
+                  max="65535"
+                  value="22"
+                  required
+                >
+              </label>
+            </div>
+
+            <label class="server-field">
+              <span data-i18n="sshUsername">
+                Username
+              </span>
+
+              <input
+                id="server-username"
+                type="text"
+                required
+                autocomplete="username"
+              >
+            </label>
+
+            <label class="server-field">
+              <span data-i18n="sshPrivateKey">
+                Private key
+              </span>
+
+              <div class="server-input-action">
+                <input
+                  id="server-key"
+                  type="text"
+                  required
+                  autocomplete="off"
+                >
+
+                <button
+                  id="server-key-browse"
+                  type="button"
+                  data-i18n="browse"
+                >
+                  Browse
+                </button>
+              </div>
+            </label>
+
+            <label class="server-field">
+              <span data-i18n="sshPassphrase">
+                Key passphrase
+              </span>
+
+              <input
+                id="server-passphrase"
+                type="password"
+                autocomplete="off"
+              >
+
+              <small data-i18n="sshPassphraseNote">
+                Used only for this session and never saved.
+              </small>
+            </label>
+
+            <label class="server-field">
+              <span data-i18n="hostKeyFingerprint">
+                Server host key
+              </span>
+
+              <div class="server-input-action">
+                <input
+                  id="server-host-key"
+                  type="text"
+                  readonly
+                  autocomplete="off"
+                  placeholder="SHA256:..."
+                >
+
+                <button
+                  id="server-host-key-reset"
+                  type="button"
+                  data-i18n="forgetHostKey"
+                >
+                  Forget key
+                </button>
+              </div>
+
+              <small data-i18n="hostKeyHelp">
+                Pinned after the first trusted connection and checked on every future connection.
+              </small>
+            </label>
+          </section>
+
+          <section class="server-form-section">
+            <div class="server-section-title">
+              <strong data-i18n="logSource">
+                Log source
+              </strong>
+            </div>
+
+            <label class="server-field">
+              <span data-i18n="logDirectory">
+                Log directory
+              </span>
+
+              <input
+                id="server-log-directory"
+                type="text"
+                required
+                autocomplete="off"
+                placeholder="/var/log/nginx"
+              >
+            </label>
+
+            <div class="server-grid">
+              <label class="server-field server-field-wide">
+                <span data-i18n="logPattern">
+                  File pattern
+                </span>
+
+                <input
+                  id="server-log-pattern"
+                  type="text"
+                  required
+                  autocomplete="off"
+                  placeholder="*.log"
+                >
+              </label>
+
+              <label class="server-field">
+                <span data-i18n="parser">
+                  Parser
+                </span>
+
+                <select id="server-parser">
+                  <option
+                    value="auto"
+                    data-i18n="parserAuto"
+                  >
+                    Auto detect
+                  </option>
+
+                  <option
+                    value="apache-combined"
+                    data-i18n="parserApacheCombined"
+                  >
+                    Apache Combined
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <label class="server-field">
+              <span data-i18n="projectSuffix">
+                Project suffix
+              </span>
+
+              <input
+                id="server-project-suffix"
+                type="text"
+                autocomplete="off"
+                placeholder="-ssl_log"
+              >
+
+              <small data-i18n="projectSuffixHelp">
+                Optional suffix removed from discovered log filenames.
+              </small>
+            </label>
+          </section>
+
+          <section class="server-startup-options">
+            <div class="server-section-title">
+              <strong data-i18n="startupOptions">
+                Startup
+              </strong>
+            </div>
+
+            <label class="server-check-option">
+              <input
+                id="server-default-profile"
+                type="checkbox"
+              >
+
+              <span data-i18n="defaultProfile">
+                Use as default server
+              </span>
+            </label>
+
+            <label class="server-check-option">
+              <input
+                id="server-auto-connect"
+                type="checkbox"
+              >
+
+              <span data-i18n="autoConnect">
+                Connect automatically on startup
+              </span>
+            </label>
+
+            <label class="server-check-option">
+              <input
+                id="server-remember-passphrase"
+                type="checkbox"
+              >
+
+              <span data-i18n="rememberPassphrase">
+                Remember passphrase securely on this computer
+              </span>
+            </label>
+
+            <label class="server-check-option">
+              <input
+                id="server-launch-at-login"
+                type="checkbox"
+              >
+
+              <span data-i18n="launchAtLogin">
+                Start with Windows
+              </span>
+            </label>
+          </section>
+
+          <div
+            id="server-test-status"
+            class="server-test-status"
+            data-state="idle"
+          ></div>
+
+          <section
+            id="server-discovery-results"
+            class="server-discovery-results"
+            hidden
+          >
+            <div class="server-discovery-heading">
+              <strong data-i18n="discoveredLogs">
+                Discovered logs
+              </strong>
+
+              <span id="server-discovery-count"></span>
+            </div>
+
+            <div
+              id="server-discovery-list"
+              class="server-discovery-list"
+            ></div>
+          </section>
+
+          <footer class="server-form-actions">
+            <div class="server-discovery-actions">
+              <button
+                id="server-test"
+                class="server-secondary-action"
+                type="button"
+                data-i18n="testConnection"
+              >
+                Test connection
+              </button>
+
+              <button
+                id="server-discover"
+                class="server-secondary-action"
+                type="button"
+                disabled
+                data-i18n="discoverLogs"
+              >
+                Discover logs
+              </button>
+            </div>
+
+            <div>
+              <button
+                id="server-cancel"
+                class="server-secondary-action"
+                type="button"
+                data-i18n="cancel"
+              >
+                Cancel
+              </button>
+
+              <button
+                id="server-save"
+                class="server-primary-action"
+                type="submit"
+                disabled
+                data-i18n="saveServer"
+              >
+                Save server
+              </button>
+            </div>
+          </footer>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <script src="./demo-preload.js"></script>
+
+  <script
+    type="module"
+    src="./app/electron/renderer/renderer.js"
+  ></script>
+</body>
+</html>

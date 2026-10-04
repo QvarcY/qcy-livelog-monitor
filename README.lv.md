@@ -13,6 +13,11 @@ Pārvērt trokšņainu Apache/Nginx access log plūsmu meklējamos pieprasījumo
 ![Licence](https://img.shields.io/badge/license-MIT-4c9)
 ![Electron](https://img.shields.io/badge/Electron-TypeScript-47848F)
 
+
+<p id="qcy-pages-demo-link">
+  <a href="https://qvarcy.github.io/qcy-livelog-monitor/"><strong>▶ Atvērt interaktīvo DEMO</strong></a><br>
+  <sub>Sintētiski dati · nav SSH savienojuma · darbojas pilnībā pārlūkā</sub>
+</p>
 </div>
 
 ---

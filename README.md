@@ -13,6 +13,11 @@ Turn noisy Apache/Nginx access logs into searchable requests, grouped Smart acti
 ![License](https://img.shields.io/badge/license-MIT-4c9)
 ![Electron](https://img.shields.io/badge/Electron-TypeScript-47848F)
 
+
+<p id="qcy-pages-demo-link">
+  <a href="https://qvarcy.github.io/qcy-livelog-monitor/"><strong>▶ Open the interactive DEMO</strong></a><br>
+  <sub>Synthetic data · no SSH connection · runs entirely in your browser</sub>
+</p>
 </div>
 
 ---
