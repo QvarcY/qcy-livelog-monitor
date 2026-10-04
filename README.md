@@ -17,7 +17,7 @@ Turn noisy Apache/Nginx access logs into searchable requests, grouped Smart acti
 
 ---
 
-![QcY LiveLog Monitor — Smart view](docs/assets/qcy-dark-smart.png)
+![QcY LiveLog Monitor](docs/assets/qcy-hero.jpg)
 
 ## What is QcY LiveLog Monitor?
 
