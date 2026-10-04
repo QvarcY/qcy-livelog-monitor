@@ -1,0 +1,62 @@
+name: Bug report
+description: Report a reproducible problem in QcY LiveLog Monitor
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug.
+
+        Do not include SSH private keys, passphrases, tokens or unredacted production logs.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Configure ...
+        3. Click ...
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: QcY version
+      placeholder: v1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: view
+    attributes:
+      label: View
+      options:
+        - Smart
+        - Raw
+        - Server setup
+        - Project tree
+        - Other
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Windows version, server/log type and any useful non-sensitive context.
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics
+      description: Remove private IPs, domains, credentials and customer data before posting.

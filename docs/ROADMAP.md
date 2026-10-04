@@ -1,55 +1,68 @@
-# Roadmap
+# QcY LiveLog Monitor Roadmap
 
-## Phase 0 — Collector proof of concept
+This roadmap describes likely development directions after the first public release.
 
-- [x] SSH connection
-- [x] encrypted private key support
-- [x] `tail -F` stream
-- [x] Apache access log parser
-- [x] basic event classification
-- [x] validate against live AREA logs
+It is not a promise of delivery dates.
 
-## Phase 1 — Multi-project collector
+## v1.0 — First public release
 
-- [x] discover available `*-ssl_log` files
-- [x] monitor multiple projects
-- [x] reconnect automatically
-- [x] detect log rotation
-- [x] normalize project names
-- [x] calculate observed hosting log delay
+Core release scope:
 
-## Phase 2 — Desktop application
+- [x] Electron desktop shell
+- [x] SSH server profiles
+- [x] secure remembered passphrases
+- [x] SSH host-key verification
+- [x] remote log discovery
+- [x] multi-project collection
+- [x] selective project monitoring
+- [x] reconnect handling
+- [x] log rotation handling
+- [x] observed log delay
+- [x] Raw request view
+- [x] Smart activity grouping
+- [x] activity layers
+- [x] live search and suggestions
+- [x] Project / Type / Status filters
+- [x] Pause / Resume
+- [x] 60-second activity timeline
+- [x] Event Details drawer
+- [x] English / Latvian UI
+- [x] Dark / Light themes
 
-- Electron shell
-- project sidebar
-- live event table
-- filters
-- search
-- pause/resume
-- connection status
-- event detail drawer
+## v1.1 candidates
 
-## Phase 3 — Diagnostics
+Potential next release work:
 
-- scanner detection
-- bot detection
-- HTTP status summaries
-- IP activity view
-- session reconstruction
-- unusual User-Agent detection
-- greeting detection
+- simultaneous monitoring of multiple SSH server profiles;
+- persistent local activity history;
+- stale / dormant log-source detection;
+- last-seen activity per project;
+- improved project/domain grouping;
+- configurable history retention;
+- more complete empty / offline / reconnect states;
+- packaging and updater improvements.
 
-## Phase 4 — History
+## Later candidates
 
-- local SQLite storage
-- retention controls
-- statistics
-- historical search
-- export
+Longer-term ideas:
 
-## Phase 5 — Packaging
+- additional access-log formats;
+- pluggable parser profiles;
+- richer security-probe analysis;
+- local statistics and trends;
+- export of filtered sessions;
+- reusable saved filters;
+- project aliases;
+- optional notification rules;
+- Linux/macOS packaging if the desktop stack is validated there.
 
-- Windows installer
-- secure local credential handling
-- automatic updates
-- settings UI
+## Non-goals for now
+
+QcY is not intended to become:
+
+- a SIEM platform;
+- a cloud log-ingestion service;
+- a replacement for full observability stacks;
+- an identity-verification system.
+
+The project should remain useful as a lightweight local SSH log monitor.
