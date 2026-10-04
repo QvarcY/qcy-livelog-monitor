@@ -17,6 +17,8 @@ Pārvērt trokšņainu Apache/Nginx access log plūsmu meklējamos pieprasījumo
 
 ---
 
+> **Pašreizējais Windows izpildījums:** QcY LiveLog Monitor v1.0.0 šobrīd ir pieejams kā Windows `.exe` programma. Nākotnē paredzēts piedāvāt arī otru izplatīšanas variantu, kas neizmanto `.exe` palaišanas failu.
+
 ![QcY LiveLog Monitor — Smart skats](docs/assets/qcy-dark-smart.png)
 
 ## Kas ir QcY LiveLog Monitor?

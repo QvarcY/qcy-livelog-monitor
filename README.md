@@ -17,6 +17,8 @@ Turn noisy Apache/Nginx access logs into searchable requests, grouped Smart acti
 
 ---
 
+> **Current Windows distribution:** QcY LiveLog Monitor v1.0.0 is currently available as a Windows `.exe` application. A second distribution option that does not rely on an `.exe` launcher is planned for a future release.
+
 ![QcY LiveLog Monitor](docs/assets/qcy-hero.jpg)
 
 ## What is QcY LiveLog Monitor?
