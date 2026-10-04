@@ -57,6 +57,20 @@ let openLiveToolbarFilter:
   LiveToolbarFilterKind | null =
     null;
 
+type LiveDetailSelection =
+  | {
+      kind: "raw";
+      id: string;
+    }
+  | {
+      kind: "smart";
+      id: string;
+    };
+
+let selectedLiveDetail:
+  LiveDetailSelection | null =
+    null;
+
 let activityTimer:
   number | null =
     null;
@@ -4549,6 +4563,801 @@ function setupSearchAndPauseControls():
 
   updatePauseButton();
 }
+function detailText(
+  value: unknown
+): string {
+  const text =
+    String(
+      value ?? ""
+    ).trim();
+
+  return text || "—";
+}
+
+function createLiveDetailPair(
+  label:
+    string,
+  value:
+    unknown,
+  wide = false
+): HTMLDivElement {
+  const pair =
+    document.createElement(
+      "div"
+    );
+
+  pair.className =
+    wide
+      ? "live-detail-pair is-wide"
+      : "live-detail-pair";
+
+  const key =
+    document.createElement(
+      "span"
+    );
+
+  key.className =
+    "live-detail-key";
+
+  key.textContent =
+    label;
+
+  const content =
+    document.createElement(
+      "div"
+    );
+
+  content.className =
+    "live-detail-value";
+
+  content.textContent =
+    detailText(
+      value
+    );
+
+  pair.append(
+    key,
+    content
+  );
+
+  return pair;
+}
+
+function liveDetailDrawer():
+  HTMLElement {
+  const drawer =
+    document.querySelector<
+      HTMLElement
+    >(
+      ".details"
+    );
+
+  if (!drawer) {
+    throw new Error(
+      "Event details drawer is missing."
+    );
+  }
+
+  return drawer;
+}
+
+function closeLiveDetailDrawer():
+  void {
+  selectedLiveDetail =
+    null;
+
+  const drawer =
+    liveDetailDrawer();
+
+  drawer.classList.remove(
+    "is-open"
+  );
+
+  drawer.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  renderCurrentView();
+}
+
+function createLiveDetailHeader(
+  subtitle:
+    string
+): HTMLElement {
+  const header =
+    document.createElement(
+      "div"
+    );
+
+  header.className =
+    "details-header";
+
+  const titleWrap =
+    document.createElement(
+      "div"
+    );
+
+  const title =
+    document.createElement(
+      "strong"
+    );
+
+  title.textContent =
+    isLatvianUi()
+      ? "Notikuma detaļas"
+      : "Event details";
+
+  const sub =
+    document.createElement(
+      "span"
+    );
+
+  sub.textContent =
+    subtitle;
+
+  titleWrap.append(
+    title,
+    sub
+  );
+
+  const close =
+    document.createElement(
+      "button"
+    );
+
+  close.type =
+    "button";
+
+  close.className =
+    "details-close";
+
+  close.textContent =
+    "×";
+
+  close.title =
+    isLatvianUi()
+      ? "Aizvērt detaļas"
+      : "Close details";
+
+  close.setAttribute(
+    "aria-label",
+    close.title
+  );
+
+  close.addEventListener(
+    "click",
+    event => {
+      event.stopPropagation();
+
+      closeLiveDetailDrawer();
+    }
+  );
+
+  header.append(
+    titleWrap,
+    close
+  );
+
+  return header;
+}
+
+function rawDetailContent(
+  event:
+    LiveRequestEvent
+): HTMLElement {
+  const body =
+    document.createElement(
+      "div"
+    );
+
+  body.className =
+    "live-detail-body";
+
+  const overview =
+    document.createElement(
+      "div"
+    );
+
+  overview.className =
+    "live-detail-hero";
+
+  const method =
+    document.createElement(
+      "span"
+    );
+
+  method.className =
+    "live-detail-method";
+
+  method.textContent =
+    event.method;
+
+  const path =
+    document.createElement(
+      "strong"
+    );
+
+  path.textContent =
+    event.path;
+
+  overview.append(
+    method,
+    path
+  );
+
+  const grid =
+    document.createElement(
+      "div"
+    );
+
+  grid.className =
+    "live-detail-grid";
+
+  grid.append(
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Projekts"
+        : "Project",
+      event.domain
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Tips"
+        : "Type",
+      event.category
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Statuss"
+        : "Status",
+      event.status
+    ),
+
+    createLiveDetailPair(
+      "IP",
+      event.ip
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Protokols"
+        : "Protocol",
+      event.protocol
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Baiti"
+        : "Bytes",
+      event.bytes
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Servera laiks"
+        : "Server time",
+      event.timestamp,
+      true
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Saņemts"
+        : "Received",
+      event.receivedAt,
+      true
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Aizture"
+        : "Delay",
+      event.observedDelayMs ===
+        null
+        ? "—"
+        : formatDelay(
+            event.observedDelayMs
+          )
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Secība"
+        : "Sequence",
+      event.sequence
+    ),
+
+    createLiveDetailPair(
+      "Referrer",
+      event.referer,
+      true
+    ),
+
+    createLiveDetailPair(
+      "User-Agent",
+      event.userAgent,
+      true
+    )
+  );
+
+  body.append(
+    overview,
+    grid
+  );
+
+  return body;
+}
+
+function smartDetailContent(
+  group:
+    ActivityGroup
+): HTMLElement {
+  const body =
+    document.createElement(
+      "div"
+    );
+
+  body.className =
+    "live-detail-body";
+
+  const requests =
+    group.requests;
+
+  const documents =
+    requests.filter(
+      request =>
+        request.role ===
+          "document"
+    ).length;
+
+  const assets =
+    requests.filter(
+      request =>
+        request.role ===
+          "asset"
+    ).length;
+
+  const background =
+    requests.filter(
+      request =>
+        request.role ===
+          "background"
+    ).length;
+
+  const errors =
+    requests.filter(
+      request =>
+        request.status >=
+          400
+    ).length;
+
+  const lastRequest =
+    requests[
+      requests.length - 1
+    ];
+
+  const overview =
+    document.createElement(
+      "div"
+    );
+
+  overview.className =
+    "live-detail-hero";
+
+  const layer =
+    document.createElement(
+      "span"
+    );
+
+  layer.className =
+    "live-detail-layer";
+
+  layer.dataset.layer =
+    group.layer;
+
+  layer.textContent =
+    displayLiveToolbarFilterValue(
+      "type",
+      group.layer
+    );
+
+  const project =
+    document.createElement(
+      "strong"
+    );
+
+  project.textContent =
+    group.domain;
+
+  overview.append(
+    layer,
+    project
+  );
+
+  const grid =
+    document.createElement(
+      "div"
+    );
+
+  grid.className =
+    "live-detail-grid";
+
+  grid.append(
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Pieprasījumi"
+        : "Requests",
+      requests.length
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Lapas"
+        : "Documents",
+      documents
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Resursi"
+        : "Assets",
+      assets
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Fona darbības"
+        : "Background",
+      background
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Kļūdas"
+        : "Errors",
+      errors
+    ),
+
+    createLiveDetailPair(
+      isLatvianUi()
+        ? "Atjaunots"
+        : "Updated",
+      group.updatedAt
+    ),
+
+    createLiveDetailPair(
+      "IP",
+      lastRequest?.ip,
+      true
+    ),
+
+    createLiveDetailPair(
+      "User-Agent",
+      lastRequest?.userAgent,
+      true
+    ),
+
+    createLiveDetailPair(
+      "Referrer",
+      lastRequest?.referer,
+      true
+    )
+  );
+
+  const section =
+    document.createElement(
+      "section"
+    );
+
+  section.className =
+    "live-detail-request-section";
+
+  const sectionTitle =
+    document.createElement(
+      "strong"
+    );
+
+  sectionTitle.textContent =
+    isLatvianUi()
+      ? "Grupas pieprasījumi"
+      : "Grouped requests";
+
+  section.append(
+    sectionTitle
+  );
+
+  const requestList =
+    document.createElement(
+      "div"
+    );
+
+  requestList.className =
+    "live-detail-request-list";
+
+  for (
+    const request
+    of requests.slice(
+      -25
+    )
+  ) {
+    const row =
+      document.createElement(
+        "div"
+      );
+
+    row.className =
+      "live-detail-request";
+
+    const meta =
+      document.createElement(
+        "div"
+      );
+
+    meta.className =
+      "live-detail-request-meta";
+
+    meta.textContent =
+      `${
+        request.role
+      } · ${
+        request.status
+      } · ${
+        formatClock(
+          request.receivedAt
+        )
+      }`;
+
+    const requestPath =
+      document.createElement(
+        "div"
+      );
+
+    requestPath.className =
+      "live-detail-request-path";
+
+    requestPath.textContent =
+      `${
+        request.method
+      } ${
+        request.path
+      }`;
+
+    row.append(
+      meta,
+      requestPath
+    );
+
+    requestList.append(
+      row
+    );
+  }
+
+  section.append(
+    requestList
+  );
+
+  body.append(
+    overview,
+    grid,
+    section
+  );
+
+  return body;
+}
+
+function renderSelectedLiveDetail():
+  void {
+  const drawer =
+    liveDetailDrawer();
+
+  if (
+    selectedLiveDetail ===
+    null
+  ) {
+    drawer.classList.remove(
+      "is-open"
+    );
+
+    drawer.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+    return;
+  }
+
+  if (
+    selectedLiveDetail.kind ===
+    "raw"
+  ) {
+    const event =
+      rawRequests.get(
+        Number(
+          selectedLiveDetail.id
+        )
+      );
+
+    if (!event) {
+      selectedLiveDetail =
+        null;
+
+      drawer.classList.remove(
+        "is-open"
+      );
+
+      return;
+    }
+
+    drawer.replaceChildren(
+      createLiveDetailHeader(
+        isLatvianUi()
+          ? "tiešais pieprasījums"
+          : "raw request"
+      ),
+      rawDetailContent(
+        event
+      )
+    );
+  } else {
+    const group =
+      smartGroups.get(
+        selectedLiveDetail.id
+      );
+
+    if (!group) {
+      selectedLiveDetail =
+        null;
+
+      drawer.classList.remove(
+        "is-open"
+      );
+
+      return;
+    }
+
+    drawer.replaceChildren(
+      createLiveDetailHeader(
+        isLatvianUi()
+          ? "Smart aktivitāte"
+          : "Smart activity"
+      ),
+      smartDetailContent(
+        group
+      )
+    );
+  }
+
+  drawer.classList.add(
+    "is-open"
+  );
+
+  drawer.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+}
+
+function selectLiveDetail(
+  kind:
+    "raw" | "smart",
+  id:
+    string
+): void {
+  selectedLiveDetail = {
+    kind,
+    id
+  };
+
+  if (kind === "smart") {
+    expandedGroups.delete(
+      id
+    );
+  }
+
+  closeLiveSearchSuggestions();
+  closeLiveToolbarFilterMenu();
+
+  renderCurrentView();
+}
+
+function setupLiveDetailDrawer():
+  void {
+  const list =
+    requireElement<
+      HTMLDivElement
+    >(
+      "event-list"
+    );
+
+  const drawer =
+    liveDetailDrawer();
+
+  drawer.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  list.addEventListener(
+    "click",
+    event => {
+      const target =
+        event.target;
+
+      if (
+        !(target instanceof Element)
+      ) {
+        return;
+      }
+
+      const item =
+        target.closest<
+          HTMLElement
+        >(
+          "[data-live-detail-kind]"
+        );
+
+      if (!item) {
+        return;
+      }
+
+      const kind =
+        item.dataset
+          .liveDetailKind;
+
+      const id =
+        item.dataset
+          .liveDetailId;
+
+      if (
+        !id ||
+        (
+          kind !== "raw" &&
+          kind !== "smart"
+        )
+      ) {
+        return;
+      }
+
+      if (
+        kind === "smart" &&
+        target.closest(
+          ".smart-group-summary"
+        )
+      ) {
+        event.stopPropagation();
+      }
+
+      selectLiveDetail(
+        kind,
+        id
+      );
+    },
+    true
+  );
+
+  window.addEventListener(
+    "keydown",
+    event => {
+      if (
+        event.key !==
+          "Escape" ||
+        selectedLiveDetail ===
+          null
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      closeLiveDetailDrawer();
+    },
+    true
+  );
+}
 function renderRawView():
   void {
   const text =
@@ -4601,10 +5410,34 @@ function renderRawView():
       const event
       of events
     ) {
-      list.append(
+      const row =
         createRawRow(
           event
-        )
+        );
+
+      row.dataset.liveDetailKind =
+        "raw";
+
+      row.dataset.liveDetailId =
+        String(
+          event.sequence
+        );
+
+      if (
+        selectedLiveDetail?.kind ===
+          "raw" &&
+        selectedLiveDetail.id ===
+          String(
+            event.sequence
+          )
+      ) {
+        row.classList.add(
+          "is-detail-selected"
+        );
+      }
+
+      list.append(
+        row
       );
     }
   }
@@ -5127,9 +5960,9 @@ function createSmartGroup(
   );
 
   summary.title =
-    expanded
-      ? text.hideRequests
-      : text.showRequests;
+    isLatvianUi()
+      ? "Skatīt detaļas"
+      : "View details";
 
   summary.addEventListener(
     "click",
@@ -5233,10 +6066,30 @@ function renderSmartView():
       const group
       of groups
     ) {
-      list.append(
+      const element =
         createSmartGroup(
           group
-        )
+        );
+
+      element.dataset.liveDetailKind =
+        "smart";
+
+      element.dataset.liveDetailId =
+        group.id;
+
+      if (
+        selectedLiveDetail?.kind ===
+          "smart" &&
+        selectedLiveDetail.id ===
+          group.id
+      ) {
+        element.classList.add(
+          "is-detail-selected"
+        );
+      }
+
+      list.append(
+        element
       );
     }
   }
@@ -5258,6 +6111,7 @@ function renderCurrentView():
   updateLiveToolbarFilterButtons();
   updatePauseButton();
   updatePresentation();
+  renderSelectedLiveDetail();
   renderActivityTimeline();
 
   if (
@@ -5443,6 +6297,7 @@ export async function setupLiveBridge():
   createViewControls();
   setupSearchAndPauseControls();
   setupLiveToolbarFilters();
+  setupLiveDetailDrawer();
   watchLanguage();
   startActivityClock();
 
