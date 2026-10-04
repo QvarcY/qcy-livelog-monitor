@@ -266,7 +266,7 @@ async function main(): Promise<void> {
   }
 
   console.log("");
-  console.log("AREA Live Logs — multi-project");
+  console.log("QcY LiveLog Monitor — multi-project");
   console.log("==============================");
   console.log(`Host: ${config.host}:${config.port}`);
   console.log(`User: ${config.username}`);

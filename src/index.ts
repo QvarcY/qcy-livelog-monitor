@@ -62,7 +62,7 @@ async function main(): Promise<void> {
   }
 
   console.log("");
-  console.log("AREA Live Logs");
+  console.log("QcY LiveLog Monitor");
   console.log("==============");
   console.log(`Host: ${config.host}:${config.port}`);
   console.log(`User: ${config.username}`);

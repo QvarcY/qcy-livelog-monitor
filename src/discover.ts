@@ -42,7 +42,7 @@ async function main(): Promise<void> {
   }
 
   console.log("");
-  console.log("AREA Live Logs — discovery");
+  console.log("QcY LiveLog Monitor — discovery");
   console.log("==========================");
   console.log("");
 

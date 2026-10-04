@@ -10,8 +10,8 @@ export interface DiscoveredLog {
 
 export function getRemoteLogDir(): string {
   return (
-    process.env.AREA_REMOTE_LOG_DIR ??
-    "/usr/local/apache/domlogs/kasidlv"
+    process.env.QCY_REMOTE_LOG_DIR ??
+    "/var/log/nginx"
   );
 }
 

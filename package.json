@@ -1,9 +1,9 @@
 {
-    "name":  "area-live-logs",
-    "version":  "0.1.0",
+    "name":  "qcy-livelog-monitor",
+    "version":  "1.0.0",
     "private":  true,
     "type":  "module",
-    "description":  "Near-real-time access log viewer for hosted web projects over SSH.",
+    "description":  "Desktop SSH access-log monitor with Smart activity grouping, live filtering and secure server profiles.",
     "scripts":  {
                     "dev":  "tsx src/index.ts",
                     "build":  "tsc -p tsconfig.json \u0026\u0026 node scripts/copy-electron-assets.mjs",
@@ -22,5 +22,26 @@
                             "tsx":  "^4.23.15",
                             "typescript":  "^7.0.2"
                         },
-    "main":  "dist/electron/main.js"
+    "main":  "dist/electron/main.js",
+    "author":  "QvarcY",
+    "license":  "MIT",
+    "homepage":  "https://github.com/QvarcY/qcy-livelog-monitor",
+    "repository":  {
+                       "type":  "git",
+                       "url":  "git+https://github.com/QvarcY/qcy-livelog-monitor.git"
+                   },
+    "bugs":  {
+                 "url":  "https://github.com/QvarcY/qcy-livelog-monitor/issues"
+             },
+    "keywords":  [
+                     "ssh",
+                     "logs",
+                     "access-log",
+                     "monitoring",
+                     "electron",
+                     "apache",
+                     "nginx",
+                     "security",
+                     "developer-tools"
+                 ]
 }

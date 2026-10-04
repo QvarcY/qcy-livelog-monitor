@@ -11,15 +11,15 @@ console.log("=== PROJECT MONITORING TESTS ===");
 assert.deepEqual(
   normalizeMonitoredProjectDomains(
     [
-      " Rekini.CraftIN.lv ",
-      "rekini.craftin.lv",
-      "kas.id.lv"
+      " App.Example.com ",
+      "app.example.com",
+      "example.net"
     ],
     null
   ),
   [
-    "kas.id.lv",
-    "rekini.craftin.lv"
+    "app.example.com",
+    "example.net"
   ]
 );
 
@@ -37,14 +37,14 @@ console.log("PASS null means monitor all");
 
 const groups =
   groupProjectDomains([
-    "craftin.lv",
-    "rekini.craftin.lv",
-    "laserlearn.craftin.lv",
-    "kas.id.lv",
-    "apsardze.kas.id.lv",
-    "portfolio.kas.id.lv",
-    "craftin.lv.kas.id.lv",
-    "thenshop.kas.id.lv"
+    "example.com",
+    "app.example.com",
+    "docs.example.com",
+    "example.net",
+    "api.example.net",
+    "portfolio.example.net",
+    "shop.example.net",
+    "status.example.net"
   ]);
 
 assert.deepEqual(
@@ -52,24 +52,24 @@ assert.deepEqual(
   [
     {
       root:
-        "craftin.lv",
+        "example.com",
 
       domains: [
-        "craftin.lv",
-        "laserlearn.craftin.lv",
-        "rekini.craftin.lv"
+        "example.com",
+        "app.example.com",
+        "docs.example.com"
       ]
     },
     {
       root:
-        "kas.id.lv",
+        "example.net",
 
       domains: [
-        "kas.id.lv",
-        "apsardze.kas.id.lv",
-        "craftin.lv.kas.id.lv",
-        "portfolio.kas.id.lv",
-        "thenshop.kas.id.lv"
+        "example.net",
+        "api.example.net",
+        "portfolio.example.net",
+        "shop.example.net",
+        "status.example.net"
       ]
     }
   ]

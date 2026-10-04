@@ -11,14 +11,14 @@ export interface AppConfig {
 
 export function getConfig(): AppConfig {
   return {
-    host: process.env.AREA_SSH_HOST ?? "server50.areait.lv",
-    port: Number(process.env.AREA_SSH_PORT ?? "22"),
-    username: process.env.AREA_SSH_USER ?? "kasidlv",
+    host: process.env.QCY_SSH_HOST ?? "example.com",
+    port: Number(process.env.QCY_SSH_PORT ?? "22"),
+    username: process.env.QCY_SSH_USER ?? "user",
     privateKeyPath:
-      process.env.AREA_SSH_KEY ??
-      path.join(os.homedir(), ".ssh", "area_logviewer_ed25519"),
+      process.env.QCY_SSH_KEY ??
+      path.join(os.homedir(), ".ssh", "id_ed25519"),
     remoteLogPath:
-      process.env.AREA_REMOTE_LOG ??
-      "/usr/local/apache/domlogs/kasidlv/rekini.craftin.lv-ssl_log"
+      process.env.QCY_REMOTE_LOG ??
+      "/var/log/nginx/access.log"
   };
 }
